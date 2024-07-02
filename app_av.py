@@ -55,7 +55,6 @@ def load_events_from_db():
     for event in collection.find():
         event['_id'] = str(event['_id'])  # Convert ObjectId to string
         event['color'] = get_event_color(event['context'])  # Assign color based on context
-        event['end'] = (datetime.strptime(event['end'], '%Y-%m-%d') - timedelta(days=1)).strftime('%Y-%m-%d')  # Adjust end date for display, fullcalendar end date is exclusive!
         events.append(event)
     return events
 
@@ -225,6 +224,8 @@ def display_event_details_modal(clicked_event):
         event_title = clicked_event.get('title', 'No Title')
         start_date = clicked_event.get('start', 'No Start Date')
         end_date = clicked_event.get('end', 'No End Date')
+        if end_date != 'No End Date':
+            end_date = (datetime.strptime(end_date, '%Y-%m-%d') - timedelta(days=1)).strftime('%Y-%m-%d')
         place = clicked_event.get('extendedProps', {}).get('context', 'No Place').upper()
 
         header = f"Event Details: {event_title}"
