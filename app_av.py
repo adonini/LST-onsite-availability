@@ -279,7 +279,7 @@ def manage_events(url, submit_btn_clicks, delete_btn_clicks, person_name, start_
                 event_id = clicked_event['extendedProps']['_id']
                 event_title = clicked_event['title']
                 event_start = clicked_event['start']
-                event_end = clicked_event['end']
+                event_end = clicked_event.get('end', event_start)  # Use start date if end date is not set
                 collection.delete_one({"_id": ObjectId(event_id)})
                 logging.info(f"Event deleted: ID={event_id}, Title={event_title}, Start={event_start}, End={event_end}")
 
