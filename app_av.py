@@ -122,6 +122,7 @@ app.layout = dbc.Container([
                                 dbc.Col([
                                     dbc.Label('Person\'s Name'),
                                     dbc.Input(id='person-name-input', type='text', required=True, className="mb-3"),
+                                    dbc.FormFeedback("Please provide your name.", type="invalid"),
                                 ])
                             ]),
                             dbc.Row([
@@ -183,20 +184,26 @@ app.layout = dbc.Container([
 # Callbacks
 ############
 
-@app.callback(Output('modal-add-event', 'is_open'),
-              [Input('add-event-button', 'n_clicks'),
-              Input('close-add-event-modal-button', 'n_clicks'),
-              Input('submit-event-button', 'n_clicks')],
-              [State('modal-add-event', 'is_open')],)
-def toggle_modal_add_event(add_event_btn_clicks, close_btn_clicks, submit_btn_clicks, is_open):
+@app.callback(
+    [Output('modal-add-event', 'is_open'),
+     Output('person-name-input', 'invalid')],
+    [Input('add-event-button', 'n_clicks'),
+     Input('close-add-event-modal-button', 'n_clicks'),
+     Input('submit-event-button', 'n_clicks')],
+    [State('modal-add-event', 'is_open'),
+     State('person-name-input', 'value')]
+)
+def toggle_modal_add_event(add_event_btn_clicks, close_btn_clicks, submit_btn_clicks, is_open, person_name):
     ctx = callback_context
     if ctx.triggered:
         button_id = ctx.triggered[0]['prop_id'].split('.')[0]
         if button_id == 'add-event-button':
-            return True
+            return True, False  # Open modal and reset validation
         elif button_id in ['close-add-event-modal-button', 'submit-event-button']:
-            return False
-    return is_open
+            if button_id == 'submit-event-button' and not person_name:
+                return is_open, True  # Keep modal open and highlight input for missing name
+            return False, False  # Close modal and reset validation
+    return is_open, False
 
 
 @app.callback(Output('event-modal', 'is_open'),
