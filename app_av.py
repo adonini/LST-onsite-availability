@@ -1,18 +1,31 @@
 import dash
 from dash import dcc, html, Input, Output, State, callback_context
-import full_calendar_component as fcc  # Importing FullCalendarComponent from your module
+import full_calendar_component as fcc
 from datetime import datetime
 import dash_bootstrap_components as dbc
 import flask
 from pymongo import MongoClient
 from bson import ObjectId
+from waitress import serve
+from dotenv import load_dotenv
+import os
+import logging
 
+
+load_dotenv()
+mongo_host = os.environ.get('DB_HOST', 'localhost')
+mongo_port = os.environ.get('DB_PORT')
+mongo_db = os.environ.get('DB_NAME')
+mongo_coll = os.environ.get('DB_COLL')
+mongo_url = "mongodb://" + mongo_host + ":" + mongo_port
+
+# Configure logging
+logging.basicConfig(filename='av_logs.txt', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Mongo stuff
-mongo_uri = "mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+2.2.10"
-client = MongoClient(mongo_uri)
-db = client['LST']
-collection = db['availability']
+client = MongoClient(mongo_url)
+db = client[mongo_db]
+collection = db[mongo_coll]
 
 
 server = flask.Flask(__name__)
@@ -23,16 +36,10 @@ app = dash.Dash(server=server, title='LST Onsite availability',
                 meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1.0, maximum-scale=1.5, minimum-scale=0.5'}],
                 )
 
-navbar = dbc.Navbar(
-    dbc.Container(
-        [html.H1("LST Onsite availability", style={'color': 'white', 'text-align': 'center', 'margin': 'auto', 'font-weight': 'bold'})],
-    ),
-    color='dark',
-    dark=True,
-    className='d-flex justify-content-center mb-4'
-)
 
-
+############
+# Functions
+############
 def get_event_color(event_type):
     color_map = {
         'calp': '#002642',
@@ -55,11 +62,20 @@ def load_events_from_db():
 # Initial load of events
 initial_events = load_events_from_db()
 
+##########
+# Layout
+#########
+navbar = dbc.Navbar(
+    dbc.Container(
+        [html.H1("LST Onsite availability", style={'color': 'white', 'text-align': 'center', 'margin': 'auto', 'font-weight': 'bold'})],
+    ),
+    color='dark',
+    dark=True,
+    className='d-flex justify-content-center mb-4'
+)
 
-# Get today's date
 today = datetime.now()
-# Format the date
-formatted_date = today.strftime("%Y-%m-%d")
+formatted_date = today.strftime("%Y-%m-%d")  # Format the date
 
 app.layout = dbc.Container([
     navbar,
@@ -166,13 +182,11 @@ app.layout = dbc.Container([
 # Callbacks
 ############
 
-@app.callback(
-    Output('modal-add-event', 'is_open'),
-    [Input('add-event-button', 'n_clicks'),
-     Input('close-add-event-modal-button', 'n_clicks'),
-     Input('submit-event-button', 'n_clicks')],
-    [State('modal-add-event', 'is_open')],
-)
+@app.callback(Output('modal-add-event', 'is_open'),
+              [Input('add-event-button', 'n_clicks'),
+              Input('close-add-event-modal-button', 'n_clicks'),
+              Input('submit-event-button', 'n_clicks')],
+              [State('modal-add-event', 'is_open')],)
 def toggle_modal_add_event(add_event_btn_clicks, close_btn_clicks, submit_btn_clicks, is_open):
     ctx = callback_context
     if ctx.triggered:
@@ -184,30 +198,26 @@ def toggle_modal_add_event(add_event_btn_clicks, close_btn_clicks, submit_btn_cl
     return is_open
 
 
-@app.callback(
-    Output('event-modal', 'is_open'),
-    [Input('full-calendar', 'clickedEvent'),
-     #Input('edit-event-modal-button', 'n_clicks'),
-     Input('delete-event-modal-button', 'n_clicks'),
-     Input('close-event-modal-button', 'n_clicks')],
-    [State('event-modal', 'is_open')]
-)
+@app.callback(Output('event-modal', 'is_open'),
+              [Input('full-calendar', 'clickedEvent'),
+               #Input('edit-event-modal-button', 'n_clicks'),
+               Input('delete-event-modal-button', 'n_clicks'),
+               Input('close-event-modal-button', 'n_clicks')],
+              [State('event-modal', 'is_open')])
 def toggle_event_modal(clicked_event, delete_btn_clicks, close_btn_clicks, is_open):
     ctx = callback_context
     if ctx.triggered:
         button_id = ctx.triggered[0]['prop_id'].split('.')[0]
-        if button_id in ['delete-event-modal-button', 'close-event-modal-button']: #'edit-event-modal-button', 
+        if button_id in ['delete-event-modal-button', 'close-event-modal-button']:  # 'edit-event-modal-button',
             return False
         elif clicked_event:
             return True
     return False
 
 
-@app.callback(
-    [Output('event-modal-header', 'children'),
-     Output('event-modal-body', 'children')],
-    [Input('full-calendar', 'clickedEvent')]
-)
+@app.callback([Output('event-modal-header', 'children'),
+               Output('event-modal-body', 'children')],
+              [Input('full-calendar', 'clickedEvent')])
 def display_event_details_modal(clicked_event):
     if clicked_event is not None:
         event_title = clicked_event.get('title', 'No Title')
@@ -231,15 +241,14 @@ def display_event_details_modal(clicked_event):
                Output('error-alert', 'children'),
                Output('error-alert', 'is_open')],
               [Input('submit-event-button', 'n_clicks'),
-     #Input('edit-event-modal-button', 'n_clicks'),
-     Input('delete-event-modal-button', 'n_clicks')],
-    [State('person-name-input', 'value'),
-     State('start-date-picker', 'date'),
-     State('end-date-picker', 'date'),
-     State('event-type-dropdown', 'value'),
-     State('full-calendar', 'events'),
-     State('full-calendar', 'clickedEvent')]
-)
+               #Input('edit-event-modal-button', 'n_clicks'),
+               Input('delete-event-modal-button', 'n_clicks')],
+              [State('person-name-input', 'value'),
+               State('start-date-picker', 'date'),
+               State('end-date-picker', 'date'),
+               State('event-type-dropdown', 'value'),
+               State('full-calendar', 'events'),
+               State('full-calendar', 'clickedEvent')])
 def manage_events(submit_btn_clicks, delete_btn_clicks, person_name, start_date, end_date, event_type, current_events, clicked_event):
     ctx = callback_context
     events_from_db = current_events or []  # Initialize events_from_db with current events or empty list
@@ -259,13 +268,18 @@ def manage_events(submit_btn_clicks, delete_btn_clicks, person_name, start_date,
                     }
                     # Send to MongoDB
                     collection.insert_one(new_event)
+                    logging.info(f"Event added: {new_event}")
                 else:
                     # Show an error message if person_name is empty
                     return events_from_db, "Please enter a person's name.", True
             elif button_id == 'delete-event-modal-button' and clicked_event:
-                # Delete existing event from mongo
+                # Delete existing event from mongo and retrieve event details before deleting
                 event_id = clicked_event['extendedProps']['_id']
+                event_title = clicked_event['title']
+                event_start = clicked_event['start']
+                event_end = clicked_event['end']
                 collection.delete_one({"_id": ObjectId(event_id)})
+                logging.info(f"Event deleted: ID={event_id}, Title={event_title}, Start={event_start}, End={event_end}")
 
             # Retrieve updated events from MongoDB
             events_from_db = []
@@ -277,11 +291,11 @@ def manage_events(submit_btn_clicks, delete_btn_clicks, person_name, start_date,
             return events_from_db, "", False  # Clear the alert message and close the alert if successful
 
         except Exception as e:
-            print(f"An error occurred: {str(e)}")
-            return events_from_db, f"An error occurred: {str(e)}", True  # Show the error alert with the error message
+            logging.error(f"An error occurred: {str(e)}")
+            #return events_from_db, f"An error occurred: {str(e)}", True  # Show the error alert with the error message
 
     return events_from_db, "", False  # Default return if no trigger
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    serve(app.server, host='0.0.0.0', port=5015, threads=100, _quiet=True)
