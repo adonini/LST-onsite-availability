@@ -1,7 +1,7 @@
 import dash
 from dash import dcc, html, Input, Output, State, callback_context
 import full_calendar_component as fcc
-from datetime import datetime
+from datetime import datetime, timedelta
 import dash_bootstrap_components as dbc
 import flask
 from pymongo import MongoClient
@@ -55,6 +55,7 @@ def load_events_from_db():
     for event in collection.find():
         event['_id'] = str(event['_id'])  # Convert ObjectId to string
         event['color'] = get_event_color(event['context'])  # Assign color based on context
+        event['end'] = (datetime.strptime(event['end'], '%Y-%m-%d') - timedelta(days=1)).strftime('%Y-%m-%d')  # Adjust end date for display, fullcalendar end date is exclusive!
         events.append(event)
     return events
 
@@ -260,11 +261,13 @@ def manage_events(url, submit_btn_clicks, delete_btn_clicks, person_name, start_
         try:
             if button_id == 'submit-event-button':
                 if person_name and start_date and end_date and event_type:
+                    # Adjust end date for storage to be inclusive
+                    adjusted_end_date = (datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
                     # Add new event
                     new_event = {
                         "title": f"{person_name} - {event_type.upper()}",
                         "start": start_date,
-                        "end": end_date,
+                        "end": adjusted_end_date,
                         "color": get_event_color(event_type),
                         "context": event_type,
                     }
