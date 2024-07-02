@@ -78,6 +78,7 @@ today = datetime.now()
 formatted_date = today.strftime("%Y-%m-%d")  # Format the date
 
 app.layout = dbc.Container([
+    dcc.Location(id='url', refresh=True),  # Hidden location component to detect page load
     navbar,
     dbc.Row([
         dbc.Col(
@@ -240,7 +241,8 @@ def display_event_details_modal(clicked_event):
 @app.callback([Output('full-calendar', 'events'),
                Output('error-alert', 'children'),
                Output('error-alert', 'is_open')],
-              [Input('submit-event-button', 'n_clicks'),
+              [Input('url', 'pathname'),  # Trigger loading events on page load
+               Input('submit-event-button', 'n_clicks'),
                #Input('edit-event-modal-button', 'n_clicks'),
                Input('delete-event-modal-button', 'n_clicks')],
               [State('person-name-input', 'value'),
@@ -249,7 +251,7 @@ def display_event_details_modal(clicked_event):
                State('event-type-dropdown', 'value'),
                State('full-calendar', 'events'),
                State('full-calendar', 'clickedEvent')])
-def manage_events(submit_btn_clicks, delete_btn_clicks, person_name, start_date, end_date, event_type, current_events, clicked_event):
+def manage_events(url, submit_btn_clicks, delete_btn_clicks, person_name, start_date, end_date, event_type, current_events, clicked_event):
     ctx = callback_context
     events_from_db = current_events or []  # Initialize events_from_db with current events or empty list
 
@@ -282,19 +284,16 @@ def manage_events(submit_btn_clicks, delete_btn_clicks, person_name, start_date,
                 logging.info(f"Event deleted: ID={event_id}, Title={event_title}, Start={event_start}, End={event_end}")
 
             # Retrieve updated events from MongoDB
-            events_from_db = []
-            for event in collection.find():
-                event['_id'] = str(event['_id'])  # Convert ObjectId to string
-                #event['color'] = get_event_color(event['context'])  # Assign color based on context
-                events_from_db.append(event)
-
+            events_from_db = load_events_from_db()
             return events_from_db, "", False  # Clear the alert message and close the alert if successful
 
         except Exception as e:
             logging.error(f"An error occurred: {str(e)}")
             #return events_from_db, f"An error occurred: {str(e)}", True  # Show the error alert with the error message
 
-    return events_from_db, "", False  # Default return if no trigger
+    # Default return: Load events when URL changes (page load/refresh)
+    events_from_db = load_events_from_db()
+    return events_from_db, "", False
 
 
 if __name__ == '__main__':
