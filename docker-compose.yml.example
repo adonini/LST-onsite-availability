@@ -1,0 +1,11 @@
+version: '3.5'
+services:
+  mongo:
+    hostname: "mongo-av"  # custom host name to use for the service container
+    container_name: "mongodb-av" # specifies a custom container name
+    image: "mongo:4.2.1-bionic"  # image to start the container from. Same as TCU.
+    restart: always
+    ports:  # Exposes container ports: host IP, host port and container port
+      - '...:27017'
+    volumes:  # mount host paths or named volumes that MUST be accessible by service containers
+      - /...:/data/db
