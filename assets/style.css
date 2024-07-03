@@ -1,0 +1,10 @@
+/* Add this to your CSS file */
+@media (max-width: 576px) {
+    .fc-header-toolbar {
+        flex-direction: column;
+    }
+
+    .fc-toolbar-chunk {
+        margin-bottom: 10px;
+    }
+}
