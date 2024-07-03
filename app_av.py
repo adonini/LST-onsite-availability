@@ -99,16 +99,17 @@ app.layout = dbc.Container([
                     'dayGridMonth': {
                         #'showNonCurrentDates': ,  # Hide/show the days of the previous and next month
                         'fixedWeekCount': False  # Display only the weeks in the current month
-                    }
+                    },
                 },
                 events=initial_events,  # Load initial events
             ),
-            width=8,  # Adjust the width as needed
+            xs=12,  # Full width on extra small screens
+            lg=10,  # 10 columns on large screens
             className="mx-auto mb-4",  # Center the column and add bottom margin
         )
     ]),
     dbc.Row([
-        dbc.Col(dbc.Button("Add Entry", id="add-event-button", color="primary"), width=8, className="mx-auto mb-4 justify-content-end")
+        dbc.Col(dbc.Button("Add Entry", id="add-event-button", color="primary"), xs=12, lg=10, className="mx-auto mb-4 justify-content-end")
     ], className="mb-4"),
     html.Div(id='event-details'),
     dbc.Modal(
