@@ -65,14 +65,37 @@ initial_events = load_events_from_db()
 ##########
 # Layout
 #########
+# navbar = dbc.Navbar(
+#     dbc.Container(
+#         [html.H1("LST Onsite availability", style={'color': 'white', 'text-align': 'center', 'margin': 'auto', 'font-weight': 'bold'})],
+#     ),
+#     color='dark',
+#     dark=True,
+#     className='d-flex justify-content-center mb-4'
+# )
 navbar = dbc.Navbar(
-    dbc.Container(
-        [html.H1("LST Onsite availability", style={'color': 'white', 'text-align': 'center', 'margin': 'auto', 'font-weight': 'bold'})],
-    ),
-    color='dark',
-    dark=True,
-    className='d-flex justify-content-center mb-4'
+    dbc.Container([
+        dbc.Row([
+            dbc.Col(
+                dbc.Nav([
+                    dbc.NavItem(
+                        dbc.Button("Add Entry", id="add-event-button",  className="me-4", color='info', style={'border': '2px solid white'}))],
+                        className="me-4"),
+                xs=2, lg=4,
+            ),
+            dbc.Col(
+                html.H1("LST Onsite availability", style={'color': 'white', 'text-align': 'center', 'font-weight': 'bold'}),
+                width="auto",
+                className="position-absolute top-40 start-50 translate-middle-x"
+            ),
+        ],
+        align="center")],
+    fluid=True),
+    color="dark",
+    #dark=True,
+    className="d-flex justify-content-center mb-4",
 )
+
 
 today = datetime.now()
 formatted_date = today.strftime("%Y-%m-%d")  # Format the date
@@ -113,9 +136,9 @@ app.layout = dbc.Container([
             className="mx-auto mb-4",  # Center the column and add bottom margin
         )
     ]),
-    dbc.Row([
-        dbc.Col(dbc.Button("Add Entry", id="add-event-button", color="primary"), xs=12, lg=10, className="mx-auto mb-4 justify-content-end")
-    ], className="mb-4"),
+    # dbc.Row([
+    #     dbc.Col(dbc.Button("Add Entry", id="add-event-button", color="primary"), xs=12, lg=10, className="mx-auto mb-4 justify-content-end")
+    # ], className="mb-4"),
     html.Div(id='event-details'),
     dbc.Modal(
         id='modal-add-event',
