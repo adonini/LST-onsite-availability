@@ -80,6 +80,8 @@ formatted_date = today.strftime("%Y-%m-%d")  # Format the date
 app.layout = dbc.Container([
     dcc.Location(id='url', refresh=True),  # Hidden location component to detect page load
     navbar,
+    dbc.Alert(id='success-alert', color='success', dismissable=True, duration=3000, is_open=False),
+    dbc.Alert(id='error-alert', color='danger', dismissable=True, duration=3000, is_open=False),
     dbc.Row([
         dbc.Col(
             fcc.FullCalendarComponent(
@@ -139,7 +141,7 @@ app.layout = dbc.Container([
                             ]),
                             dbc.Row([
                                 dbc.Col([
-                                    dbc.Label('Event Type'),
+                                    dbc.Label('Location'),
                                     dcc.Dropdown(
                                         id='event-type-dropdown',
                                         options=[
@@ -176,7 +178,6 @@ app.layout = dbc.Container([
             ]),
         ]
     ),
-    dbc.Alert(id='error-alert', color='danger', is_open=False),
 ], fluid=True)
 
 
@@ -247,19 +248,21 @@ def display_event_details_modal(clicked_event):
     return '', None
 
 
-@app.callback([Output('full-calendar', 'events'),
-               Output('error-alert', 'children'),
-               Output('error-alert', 'is_open')],
-              [Input('url', 'pathname'),  # Trigger loading events on page load
-               Input('submit-event-button', 'n_clicks'),
-               #Input('edit-event-modal-button', 'n_clicks'),
-               Input('delete-event-modal-button', 'n_clicks')],
-              [State('person-name-input', 'value'),
-               State('start-date-picker', 'date'),
-               State('end-date-picker', 'date'),
-               State('event-type-dropdown', 'value'),
-               State('full-calendar', 'events'),
-               State('full-calendar', 'clickedEvent')])
+@app.callback(
+    [Output('full-calendar', 'events'),
+     Output('success-alert', 'is_open'),
+     Output('success-alert', 'children'),
+     Output('error-alert', 'is_open'),
+     Output('error-alert', 'children')],
+    [Input('url', 'pathname'),  # Trigger loading events on page load
+     Input('submit-event-button', 'n_clicks'),
+     Input('delete-event-modal-button', 'n_clicks')],
+    [State('person-name-input', 'value'),
+     State('start-date-picker', 'date'),
+     State('end-date-picker', 'date'),
+     State('event-type-dropdown', 'value'),
+     State('full-calendar', 'events'),
+     State('full-calendar', 'clickedEvent')])
 def manage_events(url, submit_btn_clicks, delete_btn_clicks, person_name, start_date, end_date, event_type, current_events, clicked_event):
     ctx = callback_context
     events_from_db = current_events or []  # Initialize events_from_db with current events or empty list
@@ -268,7 +271,12 @@ def manage_events(url, submit_btn_clicks, delete_btn_clicks, person_name, start_
         button_id = ctx.triggered[0]['prop_id'].split('.')[0]
         try:
             if button_id == 'submit-event-button':
-                if person_name and start_date and end_date and event_type:
+                if not person_name:
+                    #return events_from_db, False, "", True, "Please enter a person's name."
+                    # Do nothing if person_name is empty since the error is raised in the modal
+                    return events_from_db, False, "", False, ""
+
+                if person_name and start_date and event_type:
                     # Adjust end date for storage to be inclusive
                     adjusted_end_date = (datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
                     # Add new event
@@ -282,9 +290,10 @@ def manage_events(url, submit_btn_clicks, delete_btn_clicks, person_name, start_
                     # Send to MongoDB
                     collection.insert_one(new_event)
                     logging.info(f"Event added: {new_event}")
-                else:
-                    # Show an error message if person_name is empty
-                    return events_from_db, "Please enter a person's name.", True
+
+                events_from_db = load_events_from_db()  # load events
+                #Show success alert, hide error alert
+                return events_from_db, True, "Entry added successfully.", False, ""
             elif button_id == 'delete-event-modal-button' and clicked_event:
                 # Delete existing event from mongo and retrieve event details before deleting
                 event_id = clicked_event['extendedProps']['_id']
@@ -294,17 +303,19 @@ def manage_events(url, submit_btn_clicks, delete_btn_clicks, person_name, start_
                 collection.delete_one({"_id": ObjectId(event_id)})
                 logging.info(f"Event deleted: ID={event_id}, Title={event_title}, Start={event_start}, End={event_end}")
 
-            # Retrieve updated events from MongoDB
-            events_from_db = load_events_from_db()
-            return events_from_db, "", False  # Clear the alert message and close the alert if successful
-
+                events_from_db = load_events_from_db()  # load events
+                #Show success alert, hide error alert
+                return events_from_db, True, "Entry deleted successfully.", False, ""
+            else:
+                return events_from_db, False, "", False, ""
         except Exception as e:
             logging.error(f"An error occurred: {str(e)}")
-            #return events_from_db, f"An error occurred: {str(e)}", True  # Show the error alert with the error message
+            # Return events without updating if there is an error
+            return events_from_db, False, "", True, "An error occurred."
 
     # Default return: Load events when URL changes (page load/refresh)
     events_from_db = load_events_from_db()
-    return events_from_db, "", False
+    return events_from_db, False, "", False, ""
 
 
 if __name__ == '__main__':
