@@ -80,6 +80,11 @@ formatted_date = today.strftime("%Y-%m-%d")  # Format the date
 app.layout = dbc.Container([
     dcc.Location(id='url', refresh=True),  # Hidden location component to detect page load
     navbar,
+    dcc.Interval(
+        id='interval-component',
+        interval=10 * 1000,  # Update every 10 seconds
+        n_intervals=0
+    ),
     dbc.Alert(id='success-alert', color='success', dismissable=True, duration=3000, is_open=False),
     dbc.Alert(id='error-alert', color='danger', dismissable=True, duration=3000, is_open=False),
     dbc.Row([
@@ -257,14 +262,15 @@ def display_event_details_modal(clicked_event):
      Output('error-alert', 'children')],
     [Input('url', 'pathname'),  # Trigger loading events on page load
      Input('submit-event-button', 'n_clicks'),
-     Input('delete-event-modal-button', 'n_clicks')],
+     Input('delete-event-modal-button', 'n_clicks'),
+     Input('interval-component', 'n_intervals')],
     [State('person-name-input', 'value'),
      State('start-date-picker', 'date'),
      State('end-date-picker', 'date'),
      State('event-type-dropdown', 'value'),
      State('full-calendar', 'events'),
      State('full-calendar', 'clickedEvent')])
-def manage_events(url, submit_btn_clicks, delete_btn_clicks, person_name, start_date, end_date, event_type, current_events, clicked_event):
+def manage_events(url, submit_btn_clicks, delete_btn_clicks, n_intervals, person_name, start_date, end_date, event_type, current_events, clicked_event):
     ctx = callback_context
     events_from_db = current_events or []  # Initialize events_from_db with current events or empty list
 
@@ -308,6 +314,7 @@ def manage_events(url, submit_btn_clicks, delete_btn_clicks, person_name, start_
                 #Show success alert, hide error alert
                 return events_from_db, True, "Entry deleted successfully.", False, ""
             else:
+                events_from_db = load_events_from_db()
                 return events_from_db, False, "", False, ""
         except Exception as e:
             logging.error(f"An error occurred: {str(e)}")
