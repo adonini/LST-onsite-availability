@@ -268,26 +268,37 @@ def toggle_time_pickers(is_full_day):
     [Output('modal-add-event', 'is_open'),
      Output('person-name-input', 'invalid'),
      Output('start-time-picker', 'error'),
-     Output('end-time-picker', 'error')],
+     Output('end-time-picker', 'error'),
+     Output('person-name-input', 'value'),
+     Output('start-date-picker', 'value'),
+     Output('end-date-picker', 'value'),
+     Output('start-time-picker', 'value'),
+     Output('end-time-picker', 'value'),
+     Output('full-day-checkbox', 'value'),
+     Output('event-type-dropdown', 'value'),],
     [Input('add-event-button', 'n_clicks'),
      Input('close-add-event-modal-button', 'n_clicks'),
      Input('submit-event-button', 'n_clicks')],
     [State('modal-add-event', 'is_open'),
      State('person-name-input', 'value'),
+     State('start-date-picker', 'value'),
+     State('end-date-picker', 'value'),
      State('start-time-picker', 'value'),
      State('end-time-picker', 'value'),
-     State('full-day-checkbox', 'value')]
+     State('full-day-checkbox', 'value'),
+     State('event-type-dropdown', 'value')]
 )
-def toggle_modal_add_event(add_event_btn_clicks, close_btn_clicks, submit_btn_clicks, is_open, person_name, start_time, end_time, is_full_day):
+def toggle_modal_add_event(add_event_btn_clicks, close_btn_clicks, submit_btn_clicks, is_open, person_name, start_date, end_date, start_time, end_time, is_full_day, type):
     ctx = callback_context
+    reset_input_values = [None, None, None, None, None, True, 'calp']
     if ctx.triggered:
         button_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
         if button_id == 'add-event-button':
-            return True, False, False, False  # Open modal and reset all validation
+            return [True, False, False, False] + reset_input_values  # Open modal and reset all inputs
 
         elif button_id == 'close-add-event-modal-button':
-            return False, False, False, False  # Close modal and reset all validation
+            return [False, False, False, False] + reset_input_values  # Close modal and reset all inputs
 
         elif button_id == 'submit-event-button':
             person_name_invalid = False
@@ -305,11 +316,11 @@ def toggle_modal_add_event(add_event_btn_clicks, close_btn_clicks, submit_btn_cl
 
             # If all validations pass, close the modal
             if not person_name_invalid and not start_time_error and not end_time_error:
-                return False, False, False, False  # Close modal and reset all validation
+                return [False, False, False, False] + reset_input_values  # Close modal and reset all validation
 
-            return is_open, person_name_invalid, start_time_error, end_time_error
+            return is_open, person_name_invalid, start_time_error, end_time_error, person_name, start_date, end_date, start_time, end_time, is_full_day, type
 
-    return is_open, False, False, False
+    return [is_open, False, False, False] + reset_input_values
 
 
 @app.callback(Output('event-modal', 'is_open'),
