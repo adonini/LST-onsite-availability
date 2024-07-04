@@ -290,7 +290,7 @@ def toggle_time_pickers(is_full_day):
 )
 def toggle_modal_add_event(add_event_btn_clicks, close_btn_clicks, submit_btn_clicks, is_open, person_name, start_date, end_date, start_time, end_time, is_full_day, type):
     ctx = callback_context
-    reset_input_values = [None, None, None, None, None, True, 'calp']
+    reset_input_values = [None, datetime.now().date(), datetime.now().date(), None, None, True, 'calp']
     if ctx.triggered:
         button_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
@@ -352,18 +352,40 @@ def display_event_details_modal(clicked_event):
 
         try:
             parsed_start_datetime = datetime.fromisoformat(start_date)
-            parsed_end_datetime = datetime.fromisoformat(end_date)
-            adjusted_end_datetime = parsed_end_datetime - timedelta(days=1)  # Adjust end date to be inclusive (subtract one day)
         except ValueError as e:
-            logging.error(f"Error parsing dates: {e}")
+            logging.error(f"Error parsing start date: {e}")
+            parsed_start_datetime = None
+        try:
+            parsed_end_datetime = datetime.fromisoformat(end_date) if end_date and end_date != 'No End Date' else parsed_start_datetime
+            if parsed_end_datetime and 'T' not in end_date and parsed_end_datetime != parsed_start_datetime:
+                adjusted_end_datetime = parsed_end_datetime - timedelta(days=1)
+            else:
+                adjusted_end_datetime = parsed_end_datetime
+        except ValueError as e:
+            logging.error(f"Error parsing end date: {e}")
+            parsed_end_datetime = None
+            adjusted_end_datetime = None
 
+        is_full_day = 'T' not in start_date and (not end_date or 'T' not in end_date)  # Determine if it's a full-day event
+        print(parsed_start_datetime)
+        print(parsed_end_datetime)
+        print(adjusted_end_datetime)
         place = clicked_event.get('extendedProps', {}).get('context', 'No Place').upper()
-        header = f"Event Details: {event_title}"
-        body = [html.P(f"Start: {parsed_start_datetime.strftime('%Y-%m-%d %H:%M:%S')}"),
-                html.P(f"End: {adjusted_end_datetime.strftime('%Y-%m-%d %H:%M:%S')}"),
-                html.P(f"Place: {place}")]
-        return header, body
+        header = f"Entry Details: {event_title}"
 
+        if is_full_day:
+            body = [
+                html.P([html.B("Start: "), parsed_start_datetime.strftime('%Y-%m-%d')]),
+                html.P([html.B("End: "), adjusted_end_datetime.strftime('%Y-%m-%d') if adjusted_end_datetime else "No End Date"]),
+                html.P([html.B("Place: "), place])
+            ]
+        else:
+            body = [
+                html.P([html.B("Start: "), parsed_start_datetime.strftime('%Y-%m-%d %H:%M:%S')]),
+                html.P([html.B("End: "), parsed_end_datetime.strftime('%Y-%m-%d %H:%M:%S') if parsed_end_datetime else "No End Date"]),
+                html.P([html.B("Place: "), place])
+            ]
+        return header, body
     return '', None
 
 
@@ -390,7 +412,6 @@ def display_event_details_modal(clicked_event):
 def manage_events(url, submit_btn_clicks, delete_btn_clicks, n_intervals, person_name, start_date, end_date, is_full_day, start_time, end_time, event_type, current_events, clicked_event):
     ctx = callback_context
     events_from_db = current_events or []  # Initialize events_from_db with current events or empty list
-
     if ctx.triggered:
         button_id = ctx.triggered[0]['prop_id'].split('.')[0]
         try:
