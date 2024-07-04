@@ -10,8 +10,11 @@ from waitress import serve
 from dotenv import load_dotenv
 import os
 import logging
+from dash_mantine_components import MantineProvider
 import dash_mantine_components as dmc
 
+# to be compatible with mantine components
+os.environ["REACT_VERSION"] = "18.2.0"
 
 load_dotenv()
 mongo_host = os.environ.get('DB_HOST', 'localhost')
@@ -33,7 +36,7 @@ server = flask.Flask(__name__)
 app = dash.Dash(server=server, title='LST Onsite availability',
                 update_title=None,
                 suppress_callback_exceptions=True,
-                external_stylesheets=[dbc.themes.LUX, dbc.icons.BOOTSTRAP, dbc.icons.FONT_AWESOME],
+                external_stylesheets=[dbc.themes.LUX, dbc.icons.BOOTSTRAP, dbc.icons.FONT_AWESOME, "https://unpkg.com/@mantine/dates@7/styles.css"],
                 meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1.0, maximum-scale=1.5, minimum-scale=0.5'}],
                 )
 
@@ -80,7 +83,7 @@ navbar = dbc.Navbar(
             dbc.Col(
                 dbc.Nav([
                     dbc.NavItem(
-                        dbc.Button("Add Entry", id="add-event-button",  className="me-4", color='info', style={'border': '2px solid white'}))],
+                        dbc.Button("Add Entry", id="add-event-button",  className="me-4 fs-4 btn-sm", color='info', style={'border': '2px solid white'}))],
                         className="me-4"),
                 xs=2, lg=4,
             ),
@@ -101,6 +104,61 @@ navbar = dbc.Navbar(
 today = datetime.now()
 formatted_date = today.strftime("%Y-%m-%d")  # Format the date
 
+app.layout = MantineProvider(
+    dbc.Container([
+        dcc.Location(id='url', refresh=True),
+        navbar,
+        dcc.Interval(
+            id='interval-component',
+            interval=10 * 1000,  # Update every 10 seconds
+            n_intervals=0
+        ),
+        dbc.Alert(id='success-alert', color='success', dismissable=True, duration=3000, is_open=False),
+        dbc.Alert(id='error-alert', color='danger', dismissable=True, duration=3000, is_open=False),
+        dbc.Row([
+            dbc.Col(
+                fcc.FullCalendarComponent(
+                    id='full-calendar',
+                    initialDate=f'{formatted_date}',
+                    initialView='dayGridMonth',
+                    editable=True,
+                    selectable=True,
+                    headerToolbar={
+                        'start': 'dayGridMonth timeGridWeek',
+                        'center': 'title',
+                        'end': 'prev today next'
+                    },
+                    views={
+                        'dayGridMonth': {
+                            'fixedWeekCount': False
+                        },
+                        'timeGridWeek': {
+                            'type': 'timeGrid',
+                            'slotMinTime': '06:00:00',  # Minimum time on the axis (6 AM)
+                            'slotMaxTime': '21:00:00',  # Maximum time on the axis (9 PM)
+                        },
+                    },
+                    events=initial_events,
+                ),
+                xs=12,
+                lg=10,
+                className="mx-auto mb-4",
+            )
+        ]),
+        html.Div(id='event-details'),
+        dbc.Modal(
+            id='modal-add-event',
+            children=[dbc.Card([
+                dbc.CardHeader("New Entry"),
+                dbc.CardBody(
+                    dbc.Form([
+                        dbc.Row([
+                            dbc.Col([
+                                dbc.Label("Person's Name"),
+                                dbc.Input(id='person-name-input', type='text', required=True, className="mb-3"),
+                                dbc.FormFeedback("Please provide your name.", type="invalid"),
+                            ])
+                        ]),
                         dbc.Row([
                             dbc.Col([
                                 dbc.Label('Start Date'),
@@ -127,79 +185,131 @@ formatted_date = today.strftime("%Y-%m-%d")  # Format the date
                                 ),
                             ], width=6),
                         ]),
+                        dbc.Row([
+                            dbc.Col([
+                                dbc.Checkbox(
+                                    id='full-day-checkbox',
+                                    label='Full Day',
+                                    value=True,
+                                    className="mb-3"
+                                ),
+                            ])
+                        ]),
+                        dbc.Row(
+                            id='time-picker-row',
+                            children=[
+                                dbc.Col([
+                                    dbc.Label('Start Time'),
+                                    dmc.TimeInput(id='start-time-picker', className="mb-3"),
                                 ]),
                                 dbc.Col([
-                                    dbc.Label('End Date', className="me-1"),
-                                    dcc.DatePickerSingle(id='end-date-picker', date=datetime.now().date(), placeholder='Select a date',
-                                                         display_format='YYYY-MM-DD', className="mb-3"),
+                                    dbc.Label('End Time'),
+                                    dmc.TimeInput(id='end-time-picker', className="mb-3"),
                                 ]),
-                            ]),
-                            dbc.Row([
-                                dbc.Col([
-                                    dbc.Label('Location'),
-                                    dcc.Dropdown(
-                                        id='event-type-dropdown',
-                                        options=[
-                                            {'label': 'CALP', 'value': 'calp'},
-                                            {'label': 'ORM', 'value': 'orm'},
-                                            {'label': 'Remote', 'value': 'remote'}
-                                        ],
-                                        value='calp',  # Default to Calp
-                                        clearable=False,
-                                        className="mb-3"
-                                    ),
-                                ])
-                            ]),
-                        ])
-                    ),
-                    dbc.CardFooter([
-                        dbc.Button('Submit', id='submit-event-button', size='sm', color='primary', className='me-2'),
-                        dbc.Button('Close', id='close-add-event-modal-button', size='sm', color='danger', className=''),
-                    ], className='d-flex justify-content-end'),
-                ]
-            )
-        ],
-    ),
-    dbc.Modal(
-        id='event-modal',
-        size='lg',
-        children=[
-            dbc.ModalHeader(id='event-modal-header'),
-            dbc.ModalBody(id='event-modal-body'),
-            dbc.ModalFooter([
-                #dbc.Button('Edit', id='edit-event-modal-button', color='primary'),
-                dbc.Button('Delete', id='delete-event-modal-button', color='danger'),
-                dbc.Button('Close', id='close-event-modal-button', className='ml-auto'),
-            ]),
-        ]
-    ),
-], fluid=True)
+                            ],
+                            style={'display': 'none'}
+                        ),
+                        dbc.Row([
+                            dbc.Col([
+                                dbc.Label('Location'),
+                                dcc.Dropdown(
+                                    id='event-type-dropdown',
+                                    options=[
+                                        {'label': 'CALP', 'value': 'calp'},
+                                        {'label': 'ORM', 'value': 'orm'},
+                                        {'label': 'Remote', 'value': 'remote'}
+                                    ],
+                                    value='calp',
+                                    clearable=False,
+                                    className="mb-3"
+                                ),
+                            ])
+                        ]),
+                    ])
+                ),
+                dbc.CardFooter([
+                    dbc.Button('Submit', id='submit-event-button', size='sm', color='primary', className='me-2'),
+                    dbc.Button('Close', id='close-add-event-modal-button', size='sm', color='danger', className=''),
+                ], className='d-flex justify-content-end'),
+            ])
+        ]),
+        dbc.Modal(
+            id='event-modal',
+            size='lg',
+            children=[
+                dbc.ModalHeader(id='event-modal-header'),
+                dbc.ModalBody(id='event-modal-body'),
+                dbc.ModalFooter([
+                    dbc.Button('Delete', id='delete-event-modal-button', color='danger'),
+                    dbc.Button('Close', id='close-event-modal-button', className='ml-auto'),
+                ]),
+            ]
+        ),
+    ], fluid=True)
+)
 
 
 #############
 # Callbacks
 ############
 
+# Toggle time pickers based on checkbox value
+@app.callback(
+    Output('time-picker-row', 'style'),
+    [Input('full-day-checkbox', 'value')]
+)
+def toggle_time_pickers(is_full_day):
+    if is_full_day:
+        return {'display': 'none'}
+    return {'display': 'flex'}
+
+
 @app.callback(
     [Output('modal-add-event', 'is_open'),
-     Output('person-name-input', 'invalid')],
+     Output('person-name-input', 'invalid'),
+     Output('start-time-picker', 'error'),
+     Output('end-time-picker', 'error')],
     [Input('add-event-button', 'n_clicks'),
      Input('close-add-event-modal-button', 'n_clicks'),
      Input('submit-event-button', 'n_clicks')],
     [State('modal-add-event', 'is_open'),
-     State('person-name-input', 'value')]
+     State('person-name-input', 'value'),
+     State('start-time-picker', 'value'),
+     State('end-time-picker', 'value'),
+     State('full-day-checkbox', 'value')]
 )
-def toggle_modal_add_event(add_event_btn_clicks, close_btn_clicks, submit_btn_clicks, is_open, person_name):
+def toggle_modal_add_event(add_event_btn_clicks, close_btn_clicks, submit_btn_clicks, is_open, person_name, start_time, end_time, is_full_day):
     ctx = callback_context
     if ctx.triggered:
         button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+
         if button_id == 'add-event-button':
-            return True, False  # Open modal and reset validation
-        elif button_id in ['close-add-event-modal-button', 'submit-event-button']:
-            if button_id == 'submit-event-button' and not person_name:
-                return is_open, True  # Keep modal open and highlight input for missing name
-            return False, False  # Close modal and reset validation
-    return is_open, False
+            return True, False, False, False  # Open modal and reset all validation
+
+        elif button_id == 'close-add-event-modal-button':
+            return False, False, False, False  # Close modal and reset all validation
+
+        elif button_id == 'submit-event-button':
+            person_name_invalid = False
+            start_time_error = False
+            end_time_error = False
+
+            if not person_name:
+                person_name_invalid = True  # Highlight input for missing name
+
+            # Check for time errors only if it's not a full-day event
+            if not is_full_day:
+                if not start_time or not end_time:
+                    start_time_error = "Plese provide a time"
+                    end_time_error = "Plese provide a time"
+
+            # If all validations pass, close the modal
+            if not person_name_invalid and not start_time_error and not end_time_error:
+                return False, False, False, False  # Close modal and reset all validation
+
+            return is_open, person_name_invalid, start_time_error, end_time_error
+
+    return is_open, False, False, False
 
 
 @app.callback(Output('event-modal', 'is_open'),
@@ -219,25 +329,28 @@ def toggle_event_modal(clicked_event, delete_btn_clicks, close_btn_clicks, is_op
     return False
 
 
-@app.callback([Output('event-modal-header', 'children'),
-               Output('event-modal-body', 'children')],
-              [Input('full-calendar', 'clickedEvent')])
+@app.callback(
+    [Output('event-modal-header', 'children'),
+     Output('event-modal-body', 'children')],
+    [Input('full-calendar', 'clickedEvent')])
 def display_event_details_modal(clicked_event):
     if clicked_event is not None:
         event_title = clicked_event.get('title', 'No Title')
         start_date = clicked_event.get('start', 'No Start Date')
         end_date = clicked_event.get('end', 'No End Date')
-        if end_date != 'No End Date':
-            end_date = (datetime.strptime(end_date, '%Y-%m-%d') - timedelta(days=1)).strftime('%Y-%m-%d')
+
+        try:
+            parsed_start_datetime = datetime.fromisoformat(start_date)
+            parsed_end_datetime = datetime.fromisoformat(end_date)
+            adjusted_end_datetime = parsed_end_datetime - timedelta(days=1)  # Adjust end date to be inclusive (subtract one day)
+        except ValueError as e:
+            logging.error(f"Error parsing dates: {e}")
+
         place = clicked_event.get('extendedProps', {}).get('context', 'No Place').upper()
-
         header = f"Event Details: {event_title}"
-        body = [
-            html.P(f"Start: {start_date}"),
-            html.P(f"End: {end_date}"),
-            html.P(f"Place: {place}"),
-        ]
-
+        body = [html.P(f"Start: {parsed_start_datetime.strftime('%Y-%m-%d %H:%M:%S')}"),
+                html.P(f"End: {adjusted_end_datetime.strftime('%Y-%m-%d %H:%M:%S')}"),
+                html.P(f"Place: {place}")]
         return header, body
 
     return '', None
@@ -254,12 +367,16 @@ def display_event_details_modal(clicked_event):
      Input('delete-event-modal-button', 'n_clicks'),
      Input('interval-component', 'n_intervals')],
     [State('person-name-input', 'value'),
-     State('start-date-picker', 'date'),
-     State('end-date-picker', 'date'),
+     State('start-date-picker', 'value'),
+     State('end-date-picker', 'value'),
+     State('full-day-checkbox', 'value'),
+     State('start-time-picker', 'value'),
+     State('end-time-picker', 'value'),
      State('event-type-dropdown', 'value'),
      State('full-calendar', 'events'),
-     State('full-calendar', 'clickedEvent')])
-def manage_events(url, submit_btn_clicks, delete_btn_clicks, n_intervals, person_name, start_date, end_date, event_type, current_events, clicked_event):
+     State('full-calendar', 'clickedEvent')]
+)
+def manage_events(url, submit_btn_clicks, delete_btn_clicks, n_intervals, person_name, start_date, end_date, is_full_day, start_time, end_time, event_type, current_events, clicked_event):
     ctx = callback_context
     events_from_db = current_events or []  # Initialize events_from_db with current events or empty list
 
@@ -268,28 +385,38 @@ def manage_events(url, submit_btn_clicks, delete_btn_clicks, n_intervals, person
         try:
             if button_id == 'submit-event-button':
                 if not person_name:
-                    #return events_from_db, False, "", True, "Please enter a person's name."
                     # Do nothing if person_name is empty since the error is raised in the modal
                     return events_from_db, False, "", False, ""
 
                 if person_name and start_date and event_type:
                     # Adjust end date for storage to be inclusive
                     adjusted_end_date = (datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
+                    if not is_full_day:
+                        if start_time and end_time:
+                            start_datetime = f"{start_date}T{start_time}"
+                            end_datetime = f"{end_date}T{end_time}"
+                        else:
+                            # Handle cases where times are not provided
+                            return events_from_db, False, "", False, ""
+                    else:
+                        start_datetime = start_date
+                        end_datetime = adjusted_end_date
+
                     # Add new event
                     new_event = {
                         "title": f"{person_name} - {event_type.upper()}",
-                        "start": start_date,
-                        "end": adjusted_end_date,
+                        "start": start_datetime,
+                        "end": end_datetime,
                         "color": get_event_color(event_type),
                         "context": event_type,
                     }
                     # Send to MongoDB
                     collection.insert_one(new_event)
                     logging.info(f"Event added: {new_event}")
-
                 events_from_db = load_events_from_db()  # load events
-                #Show success alert, hide error alert
+                # Show success alert, hide error alert
                 return events_from_db, True, "Entry added successfully.", False, ""
+
             elif button_id == 'delete-event-modal-button' and clicked_event:
                 # Delete existing event from mongo and retrieve event details before deleting
                 event_id = clicked_event['extendedProps']['_id']
@@ -300,11 +427,13 @@ def manage_events(url, submit_btn_clicks, delete_btn_clicks, n_intervals, person
                 logging.info(f"Event deleted: ID={event_id}, Title={event_title}, Start={event_start}, End={event_end}")
 
                 events_from_db = load_events_from_db()  # load events
-                #Show success alert, hide error alert
+                # Show success alert, hide error alert
                 return events_from_db, True, "Entry deleted successfully.", False, ""
+
             else:
                 events_from_db = load_events_from_db()
                 return events_from_db, False, "", False, ""
+
         except Exception as e:
             logging.error(f"An error occurred: {str(e)}")
             # Return events without updating if there is an error
