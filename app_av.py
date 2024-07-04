@@ -10,6 +10,7 @@ from waitress import serve
 from dotenv import load_dotenv
 import os
 import logging
+import dash_mantine_components as dmc
 
 
 load_dotenv()
@@ -100,67 +101,32 @@ navbar = dbc.Navbar(
 today = datetime.now()
 formatted_date = today.strftime("%Y-%m-%d")  # Format the date
 
-app.layout = dbc.Container([
-    dcc.Location(id='url', refresh=True),  # Hidden location component to detect page load
-    navbar,
-    dcc.Interval(
-        id='interval-component',
-        interval=10 * 1000,  # Update every 10 seconds
-        n_intervals=0
-    ),
-    dbc.Alert(id='success-alert', color='success', dismissable=True, duration=3000, is_open=False),
-    dbc.Alert(id='error-alert', color='danger', dismissable=True, duration=3000, is_open=False),
-    dbc.Row([
-        dbc.Col(
-            fcc.FullCalendarComponent(
-                id='full-calendar',
-                initialDate=f'{formatted_date}',
-                initialView='dayGridMonth',
-                editable=True,
-                selectable=True,
-                headerToolbar={
-                    'start': 'dayGridMonth dayGridWeek',
-                    'center': 'title',  # Center-align the title in the header
-                    'end': 'prev today next'
-                },
-                views={
-                    'dayGridMonth': {
-                        #'showNonCurrentDates': ,  # Hide/show the days of the previous and next month
-                        'fixedWeekCount': False  # Display only the weeks in the current month
-                    },
-                },
-                events=initial_events,  # Load initial events
-            ),
-            xs=12,  # Full width on extra small screens
-            lg=10,  # 10 columns on large screens
-            className="mx-auto mb-4",  # Center the column and add bottom margin
-        )
-    ]),
-    # dbc.Row([
-    #     dbc.Col(dbc.Button("Add Entry", id="add-event-button", color="primary"), xs=12, lg=10, className="mx-auto mb-4 justify-content-end")
-    # ], className="mb-4"),
-    html.Div(id='event-details'),
-    dbc.Modal(
-        id='modal-add-event',
-        #size='lg',
-        children=[
-            dbc.Card(
-                [
-                    dbc.CardHeader("New Entry"),
-                    dbc.CardBody(
-                        dbc.Form([
-                            dbc.Row([
-                                dbc.Col([
-                                    dbc.Label('Person\'s Name'),
-                                    dbc.Input(id='person-name-input', type='text', required=True, className="mb-3"),
-                                    dbc.FormFeedback("Please provide your name.", type="invalid"),
-                                ])
-                            ]),
-                            dbc.Row([
-                                dbc.Col([
-                                    dbc.Label('Start Date', className="me-1"),
-                                    dcc.DatePickerSingle(id='start-date-picker', date=datetime.now().date(), placeholder='Select a date',
-                                                         display_format='YYYY-MM-DD', className="mb-3"),
+                        dbc.Row([
+                            dbc.Col([
+                                dbc.Label('Start Date'),
+                                dmc.DatePicker(
+                                    id='start-date-picker',
+                                    #label='Start Date',
+                                    value=datetime.now().date(),
+                                    placeholder='Select a date',
+                                    valueFormat='DD-MM-YYYY',
+                                    className="mb-3",
+                                    popoverProps={'zIndex': 10000, 'withinPortal': True},
+                                ),
+                            ], width=6),
+                            dbc.Col([
+                                dbc.Label('End Date'),
+                                dmc.DatePicker(
+                                    id='end-date-picker',
+                                    #label='End Date',
+                                    value=datetime.now().date(),
+                                    placeholder='Select a date',
+                                    valueFormat='DD-MM-YYYY',
+                                    className="mb-3",
+                                    popoverProps={'zIndex': 10000, 'withinPortal': True},
+                                ),
+                            ], width=6),
+                        ]),
                                 ]),
                                 dbc.Col([
                                     dbc.Label('End Date', className="me-1"),
