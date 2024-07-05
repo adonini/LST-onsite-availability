@@ -223,14 +223,23 @@ app.layout = MantineProvider(
                                 ),
                             ])
                         ]),
+                        dbc.Row([
+                            dbc.Col([
+                                dbc.Label('Notes'),
+                                dbc.Textarea(
+                                    id='notes-input',
+                                    placeholder='Enter any additional information here...',
+                                    className="mb-3"
+                                ),
+                            ])
+                        ]),
                     ])
                 ),
                 dbc.CardFooter([
                     dbc.Button('Submit', id='submit-event-button', size='sm', color='primary', className='me-2'),
                     dbc.Button('Close', id='close-add-event-modal-button', size='sm', color='danger', className=''),
                 ], className='d-flex justify-content-end'),
-            ])
-        ]),
+            ])]),
         dbc.Modal(
             id='event-modal',
             size='lg',
@@ -273,7 +282,8 @@ def toggle_time_pickers(is_full_day):
      Output('start-time-picker', 'value'),
      Output('end-time-picker', 'value'),
      Output('full-day-checkbox', 'value'),
-     Output('event-type-dropdown', 'value'),],
+     Output('event-type-dropdown', 'value'),
+     Output('notes-input', 'value')],
     [Input('add-event-button', 'n_clicks'),
      Input('close-add-event-modal-button', 'n_clicks'),
      Input('submit-event-button', 'n_clicks')],
@@ -284,11 +294,12 @@ def toggle_time_pickers(is_full_day):
      State('start-time-picker', 'value'),
      State('end-time-picker', 'value'),
      State('full-day-checkbox', 'value'),
-     State('event-type-dropdown', 'value')]
+     State('event-type-dropdown', 'value'),
+     State('notes-input', 'value')]
 )
-def toggle_modal_add_event(add_event_btn_clicks, close_btn_clicks, submit_btn_clicks, is_open, person_name, start_date, end_date, start_time, end_time, is_full_day, type):
+def toggle_modal_add_event(add_event_btn_clicks, close_btn_clicks, submit_btn_clicks, is_open, person_name, start_date, end_date, start_time, end_time, is_full_day, type, notes):
     ctx = callback_context
-    reset_input_values = [None, datetime.now().date(), datetime.now().date(), None, None, True, 'calp']
+    reset_input_values = [None, datetime.now().date(), datetime.now().date(), None, None, True, 'calp', ""]
     if ctx.triggered:
         button_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
@@ -316,7 +327,7 @@ def toggle_modal_add_event(add_event_btn_clicks, close_btn_clicks, submit_btn_cl
             if not person_name_invalid and not start_time_error and not end_time_error:
                 return [False, False, False, False] + reset_input_values  # Close modal and reset all validation
 
-            return is_open, person_name_invalid, start_time_error, end_time_error, person_name, start_date, end_date, start_time, end_time, is_full_day, type
+            return is_open, person_name_invalid, start_time_error, end_time_error, person_name, start_date, end_date, start_time, end_time, is_full_day, type, notes
 
     return [is_open, False, False, False] + reset_input_values
 
@@ -365,23 +376,22 @@ def display_event_details_modal(clicked_event):
             adjusted_end_datetime = None
 
         is_full_day = 'T' not in start_date and (not end_date or 'T' not in end_date)  # Determine if it's a full-day event
-        print(parsed_start_datetime)
-        print(parsed_end_datetime)
-        print(adjusted_end_datetime)
         place = clicked_event.get('extendedProps', {}).get('context', 'No Place').upper()
+        notes = clicked_event.get('extendedProps', {}).get('notes', 'N/A')
         header = f"Entry Details: {event_title}"
-
         if is_full_day:
             body = [
                 html.P([html.B("Start: "), parsed_start_datetime.strftime('%Y-%m-%d')]),
                 html.P([html.B("End: "), adjusted_end_datetime.strftime('%Y-%m-%d') if adjusted_end_datetime else "No End Date"]),
-                html.P([html.B("Place: "), place])
+                html.P([html.B("Place: "), place]),
+                html.P([html.B("Notes: "), notes])
             ]
         else:
             body = [
                 html.P([html.B("Start: "), parsed_start_datetime.strftime('%Y-%m-%d %H:%M:%S')]),
                 html.P([html.B("End: "), parsed_end_datetime.strftime('%Y-%m-%d %H:%M:%S') if parsed_end_datetime else "No End Date"]),
-                html.P([html.B("Place: "), place])
+                html.P([html.B("Place: "), place]),
+                html.P([html.B("Notes: "), notes])
             ]
         return header, body
     return '', None
@@ -405,9 +415,10 @@ def display_event_details_modal(clicked_event):
      State('end-time-picker', 'value'),
      State('event-type-dropdown', 'value'),
      State('full-calendar', 'events'),
-     State('full-calendar', 'clickedEvent')]
+     State('full-calendar', 'clickedEvent'),
+     State('notes-input', 'value')]
 )
-def manage_events(url, submit_btn_clicks, delete_btn_clicks, n_intervals, person_name, start_date, end_date, is_full_day, start_time, end_time, event_type, current_events, clicked_event):
+def manage_events(url, submit_btn_clicks, delete_btn_clicks, n_intervals, person_name, start_date, end_date, is_full_day, start_time, end_time, event_type, current_events, clicked_event, notes):
     ctx = callback_context
     events_from_db = current_events or []  # Initialize events_from_db with current events or empty list
     if ctx.triggered:
@@ -439,6 +450,7 @@ def manage_events(url, submit_btn_clicks, delete_btn_clicks, n_intervals, person
                         "end": end_datetime,
                         "color": get_event_color(event_type),
                         "context": event_type,
+                        'notes': notes,
                     }
                     # Send to MongoDB
                     collection.insert_one(new_event)
