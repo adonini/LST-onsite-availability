@@ -84,7 +84,7 @@ navbar = dbc.Navbar(
             dbc.Col(
                 dbc.Nav([
                     dbc.NavItem(
-                        dbc.Button("Add Entry", id="add-event-button",  className="me-4 fs-4 btn-sm", color='info', style={'border': '2px solid white'}))],
+                        dbc.Button("Add Entry", id="add-event-button",  className="p-1 me-2 fs-5 btn-sm", color='info', style={'border': '2px solid white'}))],
                         className="me-4"),
                 xs=2, lg=4),
             dbc.Col(
