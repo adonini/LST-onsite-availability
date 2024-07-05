@@ -48,7 +48,8 @@ def get_event_color(event_type):
     color_map = {
         'calp': '#002642',
         'orm': '#840032',
-        'remote': '#e59500'
+        'remote': '#e59500',
+        'mirca': '#008000'
     }
     return color_map.get(event_type)
 
@@ -85,16 +86,12 @@ navbar = dbc.Navbar(
                     dbc.NavItem(
                         dbc.Button("Add Entry", id="add-event-button",  className="me-4 fs-4 btn-sm", color='info', style={'border': '2px solid white'}))],
                         className="me-4"),
-                xs=2, lg=4,
-            ),
+                xs=2, lg=4),
             dbc.Col(
                 html.H1("LST Onsite availability", style={'color': 'white', 'text-align': 'center', 'font-weight': 'bold'}),
                 width="auto",
-                className="position-absolute top-40 start-50 translate-middle-x"
-            ),
-        ],
-        align="center")],
-    fluid=True),
+                className="position-absolute top-40 start-50 translate-middle-x"),
+        ], align="center")], fluid=True),
     color="dark",
     #dark=True,
     className="d-flex justify-content-center mb-4",
@@ -217,7 +214,8 @@ app.layout = MantineProvider(
                                     options=[
                                         {'label': 'CALP', 'value': 'calp'},
                                         {'label': 'ORM', 'value': 'orm'},
-                                        {'label': 'Remote', 'value': 'remote'}
+                                        {'label': 'Remote', 'value': 'remote'},
+                                        {'label': 'Mirca', 'value': 'mirca'}
                                     ],
                                     value='calp',
                                     clearable=False,
