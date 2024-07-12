@@ -1,9 +1,17 @@
 # LST-onsite-availability
 
-Application to store and show onsite availability of people.
-All info are stored in a Mongo Database.
+The repo contains two application to store and show onsite availability of people.
+The first application is in dash and stores the info in a Mongo Database.
 
-## MongoDB
+The second is a Djano app and has implemented a login system.
+
+## Django app
+
+
+
+## Dash app
+
+### MongoDB
 
 To start the container: `docker-compose up -d`
 
@@ -15,7 +23,6 @@ To list the running containers: `docker ps`.
 
 To enter inside the Mongo container and run an interactive shell: `docker exec -it mongodb-av bash`.
 
-## Logs
+### Logs
 
-In the log file is possible to find records of any delete/add action on the calendar.
-
+In the log file of the dash app is possible to find records of any delete/add action on the calendar.
