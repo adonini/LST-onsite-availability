@@ -1,4 +1,3 @@
-/* Add this to your CSS file */
 @media (max-width: 600px) {
     .fc-header-toolbar {
         flex-direction: column;
