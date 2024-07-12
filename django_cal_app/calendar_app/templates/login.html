@@ -1,0 +1,25 @@
+<!-- templates/registration/login.html -->
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="row">
+    <div class="col-11 col-md-4 mx-auto mt-5">
+        <div class="card card-default rounded-0 shadow">
+            <div class="card-header text-center">
+                <h3 class="card-title"><b>Login</b></h3>
+            </div>
+            <div class="card-body">
+                <div class="container-fluid">
+                    <form method="post" action="{% url 'login' %}">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        <button class="btn btn-outline-dark w-100">Log In</button>
+                    </form>
+                    <p class="mt-3 text-center">Go back to <a href="{% url 'calendar' %}">Calendar</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

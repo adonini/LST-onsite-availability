@@ -1,0 +1,14 @@
+version: '3.5'
+
+services:
+  app:
+    hostname: "cal_django"
+    container_name: cal_app
+    build: .
+    command: ./entrypoint.sh
+    restart: always
+    volumes:
+      - .:/code
+      - .db_data/db.sqlite3:/db.sqlite3
+    ports:
+      - "5016:8000"
