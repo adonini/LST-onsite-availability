@@ -9,6 +9,8 @@ services:
     restart: always
     volumes:
       - .:/code
-      - .db_data/db.sqlite3:/db.sqlite3
+      - /.../db_data/db.sqlite3:/db.sqlite3
+      - /.../logs:/logs
+      - /.../django_cal_app/staticfiles:/code/staticfiles
     ports:
       - "5016:8000"
