@@ -8,11 +8,21 @@ ENV PYTHONDONTWRITEBYTECODE=1
 WORKDIR /code
 
 # install dependencies
-COPY requierements-django.txt /code/
-RUN pip install -r requierements-django.txt
+COPY requirements_django.txt /code/
+RUN pip install -r requirements_django.txt
+
+# create logs directory and log file
+RUN mkdir -p /logs
+RUN touch /logs/django_cal.log
+RUN chmod -R 755 /logs
 
 # copy project
 COPY . /code/
+
+RUN python manage.py collectstatic --noinput
+
+# ensure the entrypoint script has execute permission
+RUN chmod +x /code/entrypoint.sh
 
 #EXPOSE 8000
 
