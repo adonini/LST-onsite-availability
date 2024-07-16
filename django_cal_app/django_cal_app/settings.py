@@ -33,8 +33,11 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 #DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '161.72.87.53']
+ALLOWED_HOSTS = []
 CSRF_TRUSTED_ORIGINS = ["https://calendar.lst1.iac.es"]
+
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
 
 # Application definition
 
@@ -147,7 +150,7 @@ LOGOUT_URL = '/logout'
 #ADMIN_URL = 'users/'
 
 # Ensure the log directory exists
-LOGS_DIR = './logs'
+LOGS_DIR = '/logs'
 os.makedirs(LOGS_DIR, exist_ok=True)
 
 # Define the logging configuration
