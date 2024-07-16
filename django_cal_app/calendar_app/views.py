@@ -2,10 +2,14 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
+import logging
 from .models import Event
-from django.contrib.auth import logout
 from django.contrib import messages
 from datetime import datetime, timedelta
+from django.contrib.auth import logout
+
+# Get an instance of a logger
+logger = logging.getLogger('calendar_app')
 
 
 def logout_user(request):
@@ -66,10 +70,13 @@ def add_event(request):
             # Save the event to the database
             event.save()
             data = {}
+            event_info = f'Event ID: {event.id}, Name: {event.name_person}, Start: {event.start}, End: {event.end}, All day: {event.all_day}, Place: {event.place}, Notes: {event.notes}'
             messages.success(request, "Event added successfully!")
+            logger.info(f'Event added by {request.user}: {event_info}')
             return JsonResponse(data)
         except Exception as e:
             messages.error(request, f"There was an error adding the event: {e}")
+            logger.error(f'Error adding event: {e}')
             return JsonResponse({'status': 'error'})
     return JsonResponse({'status': 'fail'})
 
@@ -181,12 +188,15 @@ def remove_event(request):
             # Log the event ID for debugging
             print(f"Attempting to delete event with ID: {event_id}")
             event = get_object_or_404(Event, id=event_id)
+            event_info = f'Event ID: {event.id}, Name: {event.name_person}, Start: {event.start}, End: {event.end}, All day: {event.all_day}, Place: {event.place}, Notes: {event.notes}'
             event.delete()
             messages.success(request, "Event deleted successfully!")
+            logger.info(f'Event deleted by {request.user}: {event_info}')
             #data = {}
             #return JsonResponse(data)
             return JsonResponse({'status': 'success'})
         except Exception as e:
             messages.error(request, f"There was an error deleting the event: {e}")
+            logger.error(f'Error deleting event with ID {event_id}: {e}')
             return JsonResponse({'status': 'error', 'message': str(e)})
     return JsonResponse({'status': 'fail', 'message': 'Invalid request method'})

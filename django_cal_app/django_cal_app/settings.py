@@ -13,9 +13,12 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from logging.handlers import TimedRotatingFileHandler
+from datetime import time
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
@@ -139,3 +142,44 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 LOGIN_URL = '/login'
 LOGOUT_URL = '/logout'
+
+# replace default admin url
+#ADMIN_URL = 'users/'
+
+# Ensure the log directory exists
+LOGS_DIR = './logs'
+os.makedirs(LOGS_DIR, exist_ok=True)
+
+# Define the logging configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'calendar_file': {
+            'level': 'INFO',  # Log info, errors, and warnings for the calendar app
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': os.path.join(LOGS_DIR, 'calendar.log'),
+            'formatter': 'verbose',
+            'when': 'D',  # Rotate logs daily
+            'interval': 1,  # Interval of 1 day
+            'backupCount': 20,  # Keep logs for 20 days
+            'atTime': time(12, 0),  # Rotate logs at 12:00 PM
+        },
+    },
+    'loggers': {
+        'calendar_app': {  # Custom logger for your calendar app
+            'handlers': ['calendar_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+    'formatters': {
+        'verbose': {
+            'format': '%(asctime)s - %(levelname)s - %(message)s'
+        },
+    },
+    'root': {
+        'handlers': ['calendar_file'],  # Ensure the root logger writes to the same file
+        'level': 'WARNING',  # Set to WARNING to avoid duplicating INFO logs
+    },
+}
