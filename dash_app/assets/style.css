@@ -1,9 +1,0 @@
-@media (max-width: 600px) {
-    .fc-header-toolbar {
-        flex-direction: column;
-    }
-
-    .fc-toolbar-chunk {
-        margin-bottom: 10px;
-    }
-}

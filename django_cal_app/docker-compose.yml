@@ -9,8 +9,19 @@ services:
     restart: always
     volumes:
       - .:/code
-      - /.../db_data/db.sqlite3:/db.sqlite3
-      - /.../logs:/logs
-      - /.../django_cal_app/staticfiles:/code/staticfiles
+      - /home/lst1/lst-onsite-availability/db_data/db.sqlite3:/db.sqlite3
+      - /home/lst1/lst-onsite-availability/logs:/logs
+      - static:/code/staticfiles
+  nginx:
+    image: nginx
     ports:
-      - "5016:8000"
+      - "8088:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - static:/usr/share/nginx/html/static
+    depends_on:
+      - app
+    restart: always
+
+volumes:
+  static:

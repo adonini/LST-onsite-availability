@@ -40,7 +40,7 @@
                             {% csrf_token %}
                             <div class="mb-3">
                                 <label for="name_person" class="form-label">Person Name</label>
-                                <input type="text" class="form-control" id="name_person" name="name_person" required>
+				<input type="text" class="form-control" id="name_person" name="name_person" {% if user %}value="{{user.first_name}}"{% endif  %}  required>
                             </div>
                             <div class="mb-3 form-check">
                                 <input type="checkbox" class="form-check-input" id="full_day" name="full_day" checked>
@@ -57,6 +57,9 @@
                                         <input type="date" class="form-control" id="end_date" name="end_date">
                                     </div>
                                 </div>
+				<div class="row">
+					<p class="col">If you are adding just one <strong>Full Day</strong>, End Date is not needed</p>
+				</div>
                             </div>
                             <div class="mb-3" id="time_fields" style="display: none;">
                                 <div class="row">
@@ -73,10 +76,9 @@
                             <div class="mb-3">
                                 <label for="place" class="form-label">Place</label>
                                 <select class="form-select" id="place" name="place">
-                                    <option value="Calp" selected>Calp</option>
-                                    <option value="ORM">ORM</option>
-                                    <option value="Mirca">Mirca</option>
-                                    <option value="Remote">Remote</option>
+				    {% for place in places %}
+  				        <option value="{{place.id}}" selected>{{place.name}}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                             <div class="mb-3">
@@ -84,8 +86,8 @@
                                 <textarea class="form-control" id="notes" name="notes"></textarea>
                             </div>
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-primary">Add Event</button>
+                                <button type="submit" class="btn btn-success">Add Event</button>
+				<button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
                             </div>
                             {% comment %} <button type="submit" class="btn btn-primary">Add Event</button> {% endcomment %}
                         </form>
@@ -108,10 +110,10 @@
                         <p><strong>End:</strong> <span id="event-end"></span></p>
                         <p><strong>Place:</strong> <span id="event-place"></span></p>
                         <p><strong>Notes:</strong> <span id="event-notes"></span></p>
-                        <input type="hidden" id="edit-event-id" name="id">
-                        {% comment %} <button type="button" class="btn btn-primary" id="edit-event-btn" data-bs-toggle="modal" data-bs-target="#editEventModal" style="display: none;">Edit</button> {% endcomment %}
-                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                        <input type="hidden" id="event-id" name="id">
+                        <button type="button" class="btn btn-info" id="edit-event-btn" data-bs-toggle="modal" data-bs-target="#editEventModal" style="display: none;">Edit</button>
                         <button type="button" class="btn btn-danger" id="delete-event-btn" style="display: none;">Delete</button>
+			<button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
                     </div>
                 </div>
             </div>
@@ -136,7 +138,7 @@
             </div>
         </div>
 
-        {% comment %} <!-- Edit Event Modal -->
+        <!-- Edit Event Modal -->
         <div class="modal fade" id="editEventModal" tabindex="-1" aria-labelledby="editEventModalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -147,7 +149,7 @@
                     <div class="modal-body">
                         <form id="editEventForm">
                             {% csrf_token %}
-                            <input type="hidden" id="edit-event-id" name="id">
+                            <input type="hidden" id="edit-event-id" name="id" value="">
                             <div class="mb-3">
                                 <label for="edit-name_person" class="form-label">Person Name</label>
                                 <input type="text" class="form-control" id="edit-name_person" name="name_person" required>
@@ -183,10 +185,9 @@
                             <div class="mb-3">
                                 <label for="edit-place" class="form-label">Place</label>
                                 <select class="form-select" id="edit-place" name="place">
-                                    <option value="Calp">Calp</option>
-                                    <option value="ORM">ORM</option>
-                                    <option value="Mirca">Mirca</option>
-                                    <option value="Remote">Remote</option>
+				    {% for place in places %}
+				        <option value="{{place.id}}">{{place.name}}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                             <div class="mb-3">
@@ -198,11 +199,11 @@
                     </div>
                 </div>
             </div>
-        </div> {% endcomment %}
+        </div>
 
         <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js" integrity="sha384-BBtl+eGJRgqQAUMxJ7pMwbEyER4l1g+O15P+16Ep7Q9Q+zqX6gSbd85u4mG4QzX+" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
         <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/index.global.min.js'></script>
         <script>
             $(document).ready(function() {
@@ -238,6 +239,7 @@
                                 url: '/event/' + info.event.id + '/',
                                 method: 'GET',
                                 success: function(data) {
+				    console.log(data)
                                     var startDate = moment(data.start).format('DD-MM-YYYY HH:mm');
                                     var endDate = moment(data.end).format('DD-MM-YYYY HH:mm');
                                     if (data.all_day) {
@@ -252,17 +254,84 @@
                                     $('#event-name-person').text(data.title.split(' - ')[0]);
                                     $('#event-place').text(data.place);
                                     $('#event-notes').text(data.notes);
-                                    $('#edit-event-id').val(info.event.id);
-
+                                    $('#event-id').val(info.event.id);
                                     {% if user.is_authenticated %}
-                                        $('#edit-event-btn').show();
-                                        $('#delete-event-btn').show();
+                                        const creator = "{{ user.username }}";
+					if(data.creator != null && creator == data.creator){
+						$('#edit-event-btn').show();
+                                        	$('#delete-event-btn').show();
+					}else if(data.creator == null || creator != data.creator){
+						$('#edit-event-btn').hide();
+						$('#delete-event-btn').hide();
+					}
                                     {% else %}
                                         $('#edit-event-btn').hide();
                                         $('#delete-event-btn').hide();
                                     {% endif %}
-
                                     $('#eventDetailsModal').modal('show');
+				    
+				    $('#edit-event-btn').on('click', function(){
+					$('#eventDetailsModal').modal('hide')
+					setTimeout(function(){
+						$('#edit-event-id').val(data.id)
+                                                $('#edit-name_person').val(data.title)
+						$('#edit-full_day').change(function() {
+						    if (this.checked) {
+                                                        $('#edit-time_fields').hide();
+                                                        $('#edit-time_fields input').removeAttr('required');
+                                                    } else {
+                                                        $('#edit-time_fields').show();
+                                                        $('#edit-end_date').attr('required', 'required');
+                                                        $('#edit-start_time').attr('required', 'required');
+                                                        $('#edit-end_time').attr('required', 'required');
+                                                    }
+                                                });
+                                                $('#edit-full_day').prop('checked', data.all_day)
+						if(!data.all_day){
+						    let parsedEnd = data.end.split(' ')
+						    let parsedStart = data.start.split(' ')
+						    $('#edit-end_date').val(parsedEnd[0])
+						    $('#edit-end_time').val(parsedEnd[1])
+                                                    $('#edit-start_date').val(parsedStart[0])
+						    $('#edit-start_time').val(parsedStart[1])
+						    $('#edit-time_fields').show()
+						}else{
+						    let endDate = new Date(data.end)
+						    endDate.setDate(endDate.getDate() - 1)
+						    let parsedEnd = endDate.toISOString().split('T')[0]
+						    $('#edit-start_time').removeAttr('required')
+						    $('#edit-end_date').val(parsedEnd)
+                                                    $('#edit-start_date').val(data.start)
+						}
+                                                $('#edit-place option').each(function(index, option) {
+                                                     if (option.text === data.place) {  
+                                                            $('#edit-place')[0].selectedIndex = index;
+                                                     }
+                                                });
+                                                $('#edit-notes').val(data.notes)
+						$('#editEventModal').modal('show')
+						$('#editEventForm').on('submit', function(e) {
+                                                    e.preventDefault();
+						    var serializedData = $(this).serialize()
+						    console.log(serializedData)
+                           			    $.ajax({
+                                		        type: 'POST',
+                                       		        url: '{% url "add_event" %}',
+		                                        data: serializedData,
+                    			                dataType: "json",
+                            		                success: function (data) {
+                                    		            $('#editEventModal').modal('hide');
+                                    		            calendar.refetchEvents();
+                                    		            location.reload();
+                                		        },
+                                		        error: function(data) {
+                                    		            console.log(error);
+                                    		            location.reload(); 
+                                		        }
+                            			    });
+                        			});
+					}, 300)
+				    })
                                 }
                             });
                         },
@@ -275,7 +344,7 @@
                     var eventIdToDelete;
 
                     $('#delete-event-btn').on('click', function() {
-                        eventIdToDelete = $('#edit-event-id').val();
+                        eventIdToDelete = $('#event-id').val();
                         $('#confirmDeleteModal').modal('show');
                     });
 
@@ -300,6 +369,11 @@
                             }
                         });
                     });
+		    
+		    $('#addEventModal').on('show.bs.modal', function (){
+			const today = new Date().toISOString().split('T')[0];
+			document.querySelector('#addEventModal #start_date').value = today;
+		    });
 
                     $('#addEventModal').on('hidden.bs.modal', function () {
                         $('#addEventForm').trigger('reset');

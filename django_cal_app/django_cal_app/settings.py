@@ -31,9 +31,9 @@ load_dotenv(env_path)
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-#DEBUG = True
+DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '161.72.87.51']
 CSRF_TRUSTED_ORIGINS = ["https://calendar.lst1.iac.es"]
 
 CSRF_COOKIE_SECURE = True
@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     "crispy_bootstrap5",
     'calendar_app',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
@@ -131,7 +132,9 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
+STATICFILES_DIRS = [
+    BASE_DIR / 'calendar_app' / 'static',
+]
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
@@ -147,7 +150,7 @@ LOGIN_URL = '/login'
 LOGOUT_URL = '/logout'
 
 # replace default admin url
-#ADMIN_URL = 'users/'
+ADMIN_URL = 'sys-admin/'
 
 # Ensure the log directory exists
 LOGS_DIR = '/logs'
