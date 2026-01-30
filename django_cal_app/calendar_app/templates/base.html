@@ -915,7 +915,7 @@
                             data: $(this).serialize(),
                             dataType: "json",
                             success: function (resp) {
-                                $('#editEventModalAvailability').modal('hide');
+                                $('#addEventModalAvailability').modal('hide');
                                 availabilityCalendar.refetchEvents();
                                 showToast(resp?.message || "Availability created", "success");
                             },

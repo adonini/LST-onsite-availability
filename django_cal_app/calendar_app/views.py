@@ -125,13 +125,6 @@ def add_event(request):
                 end = start
 
         is_update = bool(request.POST.get('id'))
-        event = Availability.objects.get(pk=request.POST.get('id'))
-        
-        if event.created_by_id != request.user.id:
-            return JsonResponse(
-                {'status': 'forbidden', 'message': 'You can only edit your own availability'},
-                status=403
-            )
 
         if not is_update:
             logger.info('Creating the event')
@@ -146,6 +139,12 @@ def add_event(request):
             )
         else:
             logger.info('Updating the event')
+            event = Availability.objects.get(pk=request.POST.get('id'))
+            if event.created_by_id != request.user.id:
+             return JsonResponse(
+                 {'status': 'forbidden', 'message': 'You can only edit your own availability'},
+                 status=403
+             )
             event.name_person = name_person
             event.start = start
             event.end = end
