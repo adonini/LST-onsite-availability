@@ -1,12 +1,16 @@
-from ..models import Places, Event
+from ..models import Places, Availability
 
 def run():
     PLACES = [
+            "CTAO Office"
             "Calp",
-            "ORMDay",
-            "ORMNight",
+            "Holiday",
+            "Holiday - Off the island"
+            "ORM Day",
+            "ORM Night",
             "Mirca",
-            "Remote"
+            "Remote",
+            "Remote - Off the island"
             ]
 
     for element in PLACES:
@@ -15,7 +19,7 @@ def run():
         )
     print(Places.objects.all())
     #Update the current events
-    for event in Event.objects.all():
+    for event in Availability.objects.all():
         if isinstance(event.place_str, str):
             try:
                 place = Places.objects.get(name=event.place_str)

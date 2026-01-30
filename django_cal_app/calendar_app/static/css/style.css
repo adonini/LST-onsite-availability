@@ -1,0 +1,13 @@
+/* Wrap text only for activity events */
+.activity-event .fc-event-title {
+    white-space: normal !important;
+    word-wrap: break-word;
+}
+
+.fc-daygrid-event-harness:hover{
+    cursor: pointer;
+}
+
+.fc-event-title{
+    text-align: center;
+}

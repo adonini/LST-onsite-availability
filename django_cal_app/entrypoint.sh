@@ -11,7 +11,7 @@ python manage.py migrate
 
 # create superuser from env variables, if it doesn't exists
 echo "Checking and creating superuser if not exists"
-python manage.py create_superuser
+python manage.py createsuperuser --noinput
 
 # Start server
 echo "Starting server"

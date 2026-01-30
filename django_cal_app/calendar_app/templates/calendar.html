@@ -3,7 +3,15 @@
 {% block title %}LST Onsite availability{% endblock title %}
 
 {% block content %}
-<div class="col-md-12">
+<div class="contenSelector w-100 d-flex justify-content-center mt-1 mb-3">
+    <div class="availability btn btn-info pe-none d-flex align-items-center rounded me-3">
+        <p class="buttonText mb-0">Availability</p>
+    </div>
+    <div class="activities btn btn-light d-flex align-items-center rounded">
+        <p class="buttonText mb-0">Activities</p>
+    </div>
+</div>
+<div class="col-md-12 mb-2">
     <div id='calendar'></div>
 </div>
 {% endblock content %}

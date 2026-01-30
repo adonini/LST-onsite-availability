@@ -1,93 +1,87 @@
-    <!DOCTYPE html>
-    <html>
-        <head>
-            <meta charset='utf-8' />
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>LST Onsite availability</title>
+{% load static %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset='utf-8' />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>LST Onsite availability</title>
 
-            <link href="https://bootswatch.com/5/lux/bootstrap.css" rel="stylesheet">
-            <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.9.0/font/bootstrap-icons.min.css" rel="stylesheet">
-        </head>
+        <link href="https://bootswatch.com/5/lux/bootstrap.css" rel="stylesheet">
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.9.0/font/bootstrap-icons.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="{% static 'css/style.css' %}">
 
-        <body>
-            {% include "navbar.html" %}
-            <div class="container">
-                <br/>
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
+    </head>
 
-                {% block content %}
-                {% endblock %}
-            </div>
-        </body>
-
-        <!-- Add Event Modal -->
-        <div class="modal fade" id="addEventModal" tabindex="-1" aria-labelledby="addEventModalLabel" aria-hidden="true">
+    <body>
+        {% include "navbar.html" %}
+        <div id="toast-container" class="toast-container position-fixed top-0 end-0 me-15 p-3" style="z-index: 2000;"></div>
+        <div class="container">
+            <br/>
+            {% block content %}
+            {% endblock %}
+        </div>
+    
+        <!-- Add Event Modal (Availability) -->
+        <div class="modal fade" id="addEventModalAvailability" tabindex="-1" aria-labelledby="addEventModalAvailabilityLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="addEventModalLabel">Add New Event</h5>
+                        <h5 class="modal-title" id="addEventModalAvailabilityLabel">Add New Event</h5>
                         {% comment %} <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> {% endcomment %}
                     </div>
                     <div class="modal-body">
-                        <form id="addEventForm">
+                        <form id="addEventFormAvailability">
                             {% csrf_token %}
                             <div class="mb-3">
-                                <label for="name_person" class="form-label">Person Name</label>
-				<input type="text" class="form-control" id="name_person" name="name_person" {% if user %}value="{{user.first_name}}"{% endif  %}  required>
+                                <label for="name_person_availability" class="form-label">Person Name</label>
+                                <input type="text" class="form-control" id="name_person_availability" name="name_person" {% if user %}value="{{user.first_name}}"{% endif  %}  required>
                             </div>
                             <div class="mb-3 form-check">
-                                <input type="checkbox" class="form-check-input" id="full_day" name="full_day" checked>
-                                <label class="form-check-label" for="full_day">Full Day</label>
+                                <input type="checkbox" class="form-check-input" id="full_day_availability" name="full_day" checked>
+                                <label class="form-check-label" for="full_day_availability">Full Day</label>
                             </div>
-                            <div class="mb-3" id="date_fields">
+                            <div class="mb-3" id="date_fields_availability">
                                 <div class="row">
                                     <div class="col">
-                                        <label for="start_date" class="form-label">Start Date</label>
-                                        <input type="date" class="form-control" id="start_date" name="start_date" required>
+                                        <label for="start_date_availability" class="form-label">Start Date</label>
+                                        <input type="date" class="form-control" id="start_date_availability" name="start_date" required>
                                     </div>
                                     <div class="col">
-                                        <label for="end_date" class="form-label">End Date</label>
-                                        <input type="date" class="form-control" id="end_date" name="end_date">
+                                        <label for="end_date_availability" class="form-label">End Date</label>
+                                        <input type="date" class="form-control" id="end_date_availability" name="end_date">
                                     </div>
                                 </div>
-				<div class="row">
-					<p class="col">If you are adding just one <strong>Full Day</strong>, End Date is not needed</p>
-				</div>
+                                <div class="row">
+                                    <p class="col">If you are adding just one <strong>Full Day</strong>, End Date is not needed</p>
+                                </div>
                             </div>
-                            <div class="mb-3" id="time_fields" style="display: none;">
+                            <div class="mb-3" id="time_fields_availability" style="display: none;">
                                 <div class="row">
                                     <div class="col">
-                                        <label for="start_time" class="form-label">Start Time</label>
-                                        <input type="time" class="form-control" id="start_time" name="start_time">
+                                        <label for="start_time_availability" class="form-label">Start Time</label>
+                                        <input type="time" class="form-control" id="start_time_availability" name="start_time">
                                     </div>
                                     <div class="col">
-                                        <label for="end_time" class="form-label">End Time</label>
-                                        <input type="time" class="form-control" id="end_time" name="end_time" >
+                                        <label for="end_time_availability" class="form-label">End Time</label>
+                                        <input type="time" class="form-control" id="end_time_availability" name="end_time" >
                                     </div>
                                 </div>
                             </div>
                             <div class="mb-3">
-                                <label for="place" class="form-label">Place</label>
-                                <select class="form-select" id="place" name="place">
-				    {% for place in places %}
-  				        <option value="{{place.id}}" selected>{{place.name}}</option>
+                                <label for="place_availability" class="form-label">Place</label>
+                                <select class="form-select" id="place_availability" name="place">
+                                    {% for place in places %}
+                                        <option value="{{place.id}}" selected>{{place.name}}</option>
                                     {% endfor %}
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label for="notes" class="form-label">Notes</label>
-                                <textarea class="form-control" id="notes" name="notes"></textarea>
+                                <label for="notes_availability" class="form-label">Notes</label>
+                                <textarea class="form-control" id="notes_availability" name="notes"></textarea>
                             </div>
                             <div class="modal-footer">
                                 <button type="submit" class="btn btn-success">Add Event</button>
-				<button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
                             </div>
                             {% comment %} <button type="submit" class="btn btn-primary">Add Event</button> {% endcomment %}
                         </form>
@@ -96,103 +90,103 @@
             </div>
         </div>
 
-        <!-- Event Details Modal -->
-        <div class="modal fade" id="eventDetailsModal" tabindex="-1" aria-labelledby="eventDetailsModalLabel" aria-hidden="true">
+        <!-- Event Details Modal (Availability) -->
+        <div class="modal fade" id="eventDetailsModalAvailability" tabindex="-1" aria-labelledby="eventDetailsModalAvailabilityLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="eventDetailsModalLabel">Entry Details</h5>
+                        <h5 class="modal-title" id="eventDetailsModalAvailabilityLabel">Entry Details</h5>
                         {% comment %} <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> {% endcomment %}
                     </div>
                     <div class="modal-body">
-                        <p><strong>Person Name:</strong> <span id="event-name-person"></span></p>
-                        <p><strong>Start:</strong> <span id="event-start"></span></p>
-                        <p><strong>End:</strong> <span id="event-end"></span></p>
-                        <p><strong>Place:</strong> <span id="event-place"></span></p>
-                        <p><strong>Notes:</strong> <span id="event-notes"></span></p>
-                        <input type="hidden" id="event-id" name="id">
-                        <button type="button" class="btn btn-info" id="edit-event-btn" data-bs-toggle="modal" data-bs-target="#editEventModal" style="display: none;">Edit</button>
-                        <button type="button" class="btn btn-danger" id="delete-event-btn" style="display: none;">Delete</button>
-			<button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                        <p><strong>Person Name:</strong> <span id="event-name-person-availability"></span></p>
+                        <p><strong>Start:</strong> <span id="event-start-availability"></span></p>
+                        <p><strong>End:</strong> <span id="event-end-availability"></span></p>
+                        <p><strong>Place:</strong> <span id="event-place-availability"></span></p>
+                        <p><strong>Notes:</strong> <span id="event-notes-availability"></span></p>
+                        <input type="hidden" id="event-id-availability" name="id">
+                        <button type="button" class="btn btn-info" id="edit-event-btn-availability" data-bs-toggle="modal" data-bs-target="#editEventModalAvailability" style="display: none;">Edit</button>
+                        <button type="button" class="btn btn-danger" id="delete-event-btn-availability" style="display: none;">Delete</button>
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Delete Confirmation Modal -->
-        <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+        <!-- Delete Confirmation Modal (Availability) -->
+        <div class="modal fade" id="confirmDeleteModalAvailability" tabindex="-1" aria-labelledby="confirmDeleteModalAvailabilityLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content border-primary">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="confirmDeleteModalLabel">Confirm Delete</h5>
+                        <h5 class="modal-title" id="confirmDeleteModalAvailabilityLabel">Confirm Delete</h5>
                         {% comment %} <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> {% endcomment %}
                     </div>
                     <div class="modal-body">
-                        Are you sure you want to delete this event?
+                        Are you sure you want to delete this element?
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-danger" id="confirmDeleteButton">Delete</button>
+                        <button type="button" class="btn btn-danger" id="confirmDeleteButtonAvailability">Delete</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Edit Event Modal -->
-        <div class="modal fade" id="editEventModal" tabindex="-1" aria-labelledby="editEventModalLabel" aria-hidden="true">
+        <!-- Edit Event Modal (Availability) -->
+        <div class="modal fade" id="editEventModalAvailability" tabindex="-1" aria-labelledby="editEventModalAvailabilityLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="editEventModalLabel">Edit Event</h5>
+                        <h5 class="modal-title" id="editEventModalAvailabilityLabel">Edit Event</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form id="editEventForm">
+                        <form id="editEventFormAvailability">
                             {% csrf_token %}
-                            <input type="hidden" id="edit-event-id" name="id" value="">
+                            <input type="hidden" id="edit-event-id-availability" name="id" value="">
                             <div class="mb-3">
-                                <label for="edit-name_person" class="form-label">Person Name</label>
-                                <input type="text" class="form-control" id="edit-name_person" name="name_person" required>
+                                <label for="edit-name_person-availability" class="form-label">Person Name</label>
+                                <input type="text" class="form-control" id="edit-name_person-availability" name="name_person" required>
                             </div>
                             <div class="mb-3 form-check">
-                                <input type="checkbox" class="form-check-input" id="edit-full_day" name="full_day">
-                                <label class="form-check-label" for="edit-full_day">Full Day</label>
+                                <input type="checkbox" class="form-check-input" id="edit-full_day-availability" name="full_day">
+                                <label class="form-check-label" for="edit-full_day-availability">Full Day</label>
                             </div>
-                            <div class="mb-3" id="edit-date_fields">
+                            <div class="mb-3" id="edit-date_fields-availability">
                                 <div class="row">
                                     <div class="col">
-                                        <label for="edit-start_date" class="form-label">Start Date</label>
-                                        <input type="date" class="form-control" id="edit-start_date" name="start_date" required>
+                                        <label for="edit-start_date-availability" class="form-label">Start Date</label>
+                                        <input type="date" class="form-control" id="edit-start_date-availability" name="start_date" required>
                                     </div>
                                     <div class="col">
-                                        <label for="edit-end_date" class="form-label">End Date</label>
-                                        <input type="date" class="form-control" id="edit-end_date" name="end_date">
+                                        <label for="edit-end_date-availability" class="form-label">End Date</label>
+                                        <input type="date" class="form-control" id="edit-end_date-availability" name="end_date">
                                     </div>
                                 </div>
                             </div>
-                            <div class="mb-3" id="edit-time_fields" style="display: none;">
+                            <div class="mb-3" id="edit-time_fields-availability" style="display: none;">
                                 <div class="row">
                                     <div class="col">
-                                        <label for="edit-start_time" class="form-label">Start Time</label>
-                                        <input type="time" class="form-control" id="edit-start_time" name="start_time" required>
+                                        <label for="edit-start_time-availability" class="form-label">Start Time</label>
+                                        <input type="time" class="form-control" id="edit-start_time-availability" name="start_time" required>
                                     </div>
                                     <div class="col">
-                                        <label for="edit-end_time" class="form-label">End Time</label>
-                                        <input type="time" class="form-control" id="edit-end_time" name="end_time" >
+                                        <label for="edit-end_time-availability" class="form-label">End Time</label>
+                                        <input type="time" class="form-control" id="edit-end_time-availability" name="end_time" >
                                     </div>
                                 </div>
                             </div>
                             <div class="mb-3">
-                                <label for="edit-place" class="form-label">Place</label>
-                                <select class="form-select" id="edit-place" name="place">
-				    {% for place in places %}
-				        <option value="{{place.id}}">{{place.name}}</option>
+                                <label for="edit-place-availability" class="form-label">Place</label>
+                                <select class="form-select" id="edit-place-availability" name="place">
+                                    {% for place in places %}
+                                        <option value="{{place.id}}">{{place.name}}</option>
                                     {% endfor %}
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label for="edit-notes" class="form-label">Notes</label>
-                                <textarea class="form-control" id="edit-notes" name="notes"></textarea>
+                                <label for="edit-notes-availability" class="form-label">Notes</label>
+                                <textarea class="form-control" id="edit-notes-availability" name="notes"></textarea>
                             </div>
                             <button type="submit" class="btn btn-primary">Update Event</button>
                         </form>
@@ -201,234 +195,995 @@
             </div>
         </div>
 
-        <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
-        <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/index.global.min.js'></script>
-        <script>
-            $(document).ready(function() {
-                var calendarEl = document.getElementById('calendar');
-                if (calendarEl) {
-                    var calendar = new FullCalendar.Calendar(calendarEl, {
-                        initialView: 'dayGridMonth',
-                        headerToolbar: {
-                            start: 'dayGridMonth timeGridWeek',
-                            center: 'title',
-                            end: 'prev today next'
+        <!-- Add Activity Modal (Activities) -->
+        <div class="modal fade" id="addActivityModal" tabindex="-1" aria-labelledby="addActivityModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addActivityModalLabel">Add New Activity</h5>
+                        {% comment %} <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> {% endcomment %}
+                    </div>
+                    <div class="modal-body">
+                        <form id="addActivityForm">
+                            {% csrf_token %}
+
+                            <div class="mb-3">
+                                <label for="name_activity" class="form-label">Activity Name</label>
+                                <input type="text" class="form-control" id="name_activity" name="name_activity" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="activity_description" class="form-label">Description</label>
+                                <textarea class="form-control" id="activity_description" name="description"></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="row">
+                                    <div class="col">
+                                        <label for="activity_start" class="form-label">Start</label>
+                                        <input type="date" class="form-control" id="activity_start" name="start" required>
+                                    </div>
+                                    <div class="col">
+                                        <label for="activity_end" class="form-label">End</label>
+                                        <input type="date" class="form-control" id="activity_end" name="end">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="activity_status" class="form-label">Status</label>
+                                <select class="form-select" id="activity_status" name="status" required>
+                                    <option value="OG">On Going</option>
+                                    <option value="OH">On hold</option>
+                                    <option value="C">Completed</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="activity_telescope" class="form-label">Telescope</label>
+                                <select class="form-select" id="activity_telescope" name="telescope" required>
+                                    <option value="LST1">LST1</option>
+                                    <option value="LST2">LST2</option>
+                                    <option value="LST3">LST3</option>
+                                    <option value="LST4">LST4</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="activity_comments" class="form-label">Comments</label>
+                                <textarea class="form-control" id="activity_comments" name="comments"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Assignees</label>
+                                <input type="text" class="form-control" id="activity_assignee_search_add" placeholder="Search user..." autocomplete="off" />
+
+                                <div id="assignee_results_add" class="list-group mt-1 border rounded-2 shadow-sm bg-light" style="display:none;"></div>
+
+                                <div class="mt-2">
+                                    <ul id="assignee_list_add" class="list-group"></ul>
+                                </div>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-success">Add Activity</button>
+                                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Event Details Modal (Activities) -->
+        <div class="modal fade" id="eventDetailsModalActivities" tabindex="-1" aria-labelledby="eventDetailsModalActivitiesLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="eventDetailsModalActivitiesLabel">Activity Details</h5>
+                        {% comment %} <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> {% endcomment %}
+                    </div>
+                    <div class="modal-body">
+                        <p><strong>Activity Name:</strong> <span id="activity-name-details"></span></p>
+                        <p><strong>Description:</strong> <span id="activity-description-details"></span></p>
+                        <p><strong>Start:</strong> <span id="activity-start-details"></span></p>
+                        <p><strong>End:</strong> <span id="activity-end-details"></span></p>
+                        <p><strong>Status:</strong> <span id="activity-status-details"></span></p>
+                        <p><strong>Telescope:</strong> <span id="activity-telescope-details"></span></p>
+                        <p><strong>Assignees:</strong> <span id="activity-assignees-details" class="fw-bold"></span></p>
+                        <p><strong>Comments:</strong> <span id="activity-comments-details"></span></p>
+                        <input type="hidden" id="event-id-activities" name="id">
+                        <button type="button" class="btn btn-info" id="edit-event-btn-activities" data-bs-toggle="modal" data-bs-target="#editEventModalActivities" style="display: none;">Edit</button>
+                        <button type="button" class="btn btn-danger" id="delete-event-btn-activities" style="display: none;">Delete</button>
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal (Activities) -->
+        <div class="modal fade" id="confirmDeleteModalActivities" tabindex="-1" aria-labelledby="confirmDeleteModalActivitiesLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-primary">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="confirmDeleteModalActivitiesLabel">Confirm Delete</h5>
+                        {% comment %} <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> {% endcomment %}
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to delete this element?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-danger" id="confirmDeleteButtonActivities">Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Event Modal (Activities) -->
+        <div class="modal fade" id="editEventModalActivities" tabindex="-1" aria-labelledby="editEventModalActivitiesLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editEventModalActivitiesLabel">Edit Activity</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editEventFormActivities">
+                            {% csrf_token %}
+                            <input type="hidden" id="edit-event-id-activities" name="id" value="">
+
+                            <div class="mb-3">
+                                <label for="edit_name_activity" class="form-label">Activity Name</label>
+                                <input type="text" class="form-control" id="edit_name_activity" name="name_activity" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="edit_activity_description" class="form-label">Description</label>
+                                <textarea class="form-control" id="edit_activity_description" name="description"></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="row">
+                                    <div class="col">
+                                        <label for="edit_activity_start" class="form-label">Start</label>
+                                        <input type="date" class="form-control" id="edit_activity_start" name="start" required>
+                                    </div>
+                                    <div class="col">
+                                        <label for="edit_activity_end" class="form-label">End</label>
+                                        <input type="date" class="form-control" id="edit_activity_end" name="end">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="edit_activity_status" class="form-label">Status</label>
+                                <select class="form-select" id="edit_activity_status" name="status" required>
+                                    <option value="OG">On Going</option>
+                                    <option value="OH">On hold</option>
+                                    <option value="C">Completed</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="edit_activity_telescope" class="form-label">Telescope</label>
+                                <select class="form-select" id="edit_activity_telescope" name="telescope" required>
+                                    <option value="LST1">LST1</option>
+                                    <option value="LST2">LST2</option>
+                                    <option value="LST3">LST3</option>
+                                    <option value="LST4">LST4</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="edit_activity_comments" class="form-label">Comments</label>
+                                <textarea class="form-control" id="edit_activity_comments" name="comments"></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Assignees</label>
+
+                                <input type="text" class="form-control" id="activity_assignee_search_edit" placeholder="Search user..." autocomplete="off" />
+
+                                <div id="assignee_results_edit" class="list-group mt-1 border rounded-2 shadow-sm bg-light" style="display:none;"></div>
+
+                                <div class="mt-2">
+                                    <ul id="assignee_list_edit" class="list-group"></ul>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Update Activity</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/index.global.min.js'></script>
+
+    <script>
+        let mode = "availability";
+        let availabilityCalendar = null;
+        let activitiesCalendar = null;
+        let activeCalendar = null;
+
+        const SEARCH_USERS_URL = '{% url "search_users" %}';
+        const SET_ASSIGNEES_URL_TEMPLATE = '/activity/__ID__/assignees/';
+
+        let selectedAssignees = [];
+        let currentAssigneeContext = "add"; // "add" | "edit"
+        let searchXHR = null;
+        let searchTimer = null;
+
+        function escapeHtml(str) {
+            return String(str || "")
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#039;");
+        }
+
+        // Finds http/https URLs and converts them to <a>
+        function linkify(text) {
+            const escaped = escapeHtml(text);
+
+            const urlRegex = /(https?:\/\/[^\s<>"']+)/g;
+
+            return escaped.replace(urlRegex, (url) => {
+                return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+            });
+        }
+
+        function showToastFromQueryParams() {
+            const params = new URLSearchParams(window.location.search);
+            const toastMsg = params.get("toast");
+            const toastType = params.get("toast_type") || "success";
+
+            if (!toastMsg) return;
+
+            showToast(decodeURIComponent(toastMsg), toastType);
+
+            params.delete("toast");
+            params.delete("toast_type");
+            const newUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
+            window.history.replaceState({}, "", newUrl);
+        }
+
+        function showToast(message, type = "success") {
+            const container = document.getElementById("toast-container");
+            if (!container) return;
+
+            const bgClass = (type === "error") ? "text-bg-danger"
+                            : (type === "warning") ? "text-bg-warning"
+                            : "text-bg-success";
+
+            const toastEl = document.createElement("div");
+            toastEl.className = `toast align-items-center ${bgClass} border-0`;
+            toastEl.setAttribute("role", "alert");
+            toastEl.setAttribute("aria-live", "assertive");
+            toastEl.setAttribute("aria-atomic", "true");
+
+            toastEl.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">${message || "OK"}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            `;
+
+            container.appendChild(toastEl);
+
+            const toast = new bootstrap.Toast(toastEl, { delay: 2500 });
+            toast.show();
+
+            toastEl.addEventListener("hidden.bs.toast", () => toastEl.remove());
+        }
+
+        function setActiveTab(selectedMode){
+            mode = selectedMode;
+
+            const $availability = $('.contenSelector .availability');
+            const $activities = $('.contenSelector .activities');
+
+            if(mode === "availability"){
+                $availability.removeClass('btn-light').addClass('btn-info pe-none');
+                $activities.removeClass('btn-info pe-none').addClass('btn-light');
+            }else{
+                $activities.removeClass('btn-light').addClass('btn-info pe-none');
+                $availability.removeClass('btn-info pe-none').addClass('btn-light');
+            }
+        }
+
+        function hideAllOpenModals(){
+            $('#addEventModalAvailability, #eventDetailsModalAvailability, #confirmDeleteModalAvailability, #editEventModalAvailability').modal('hide');
+            $('#addActivityModal, #eventDetailsModalActivities, #confirmDeleteModalActivities, #editEventModalActivities').modal('hide');
+        }
+
+        function getAssigneeEls(ctx){
+            if(ctx === "edit"){
+                return {
+                    $input: $('#activity_assignee_search_edit'),
+                    $results: $('#assignee_results_edit'),
+                    $list: $('#assignee_list_edit'),
+                };
+            }
+            return {
+                $input: $('#activity_assignee_search_add'),
+                $results: $('#assignee_results_add'),
+                $list: $('#assignee_list_add'),
+            };
+        }
+
+        function uniqAssigneesById(list){
+            const map = new Map();
+            (list || []).forEach(u => {
+                const id = Number(u.id);
+                if(!id) return;
+                map.set(id, { id, label: u.label || u.name || u.username || String(id) });
+            });
+            return Array.from(map.values());
+        }
+
+        function setAssigneesState(ctx, list){
+            currentAssigneeContext = ctx;
+            selectedAssignees = uniqAssigneesById(list || []);
+            renderAssigneesList(ctx);
+            const els = getAssigneeEls(ctx);
+            els.$results.hide().empty();
+            els.$input.val('');
+        }
+
+        function renderAssigneesList(ctx){
+            const els = getAssigneeEls(ctx);
+            els.$list.empty();
+
+            if(!selectedAssignees.length){
+                els.$list.append(`
+                    <li class="list-group-item text-muted">
+                        There is none assigned to this activity
+                    </li>
+                `);
+                return;
+            }
+
+            selectedAssignees.forEach(u => {
+                const $li = $(`
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>${u.label}</span>
+                        <button type="button" class="btn btn-sm btn-outline-danger" data-user-id="${u.id}">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </li>
+                `);
+
+                $li.find('button').on('click', function(){
+                    const uid = Number($(this).data('user-id'));
+                    selectedAssignees = selectedAssignees.filter(x => x.id !== uid);
+                    renderAssigneesList(ctx);
+                });
+
+                els.$list.append($li);
+            });
+        }
+
+        function addAssignee(ctx, user){
+            const u = { id: Number(user.id), label: user.label || user.name || user.username };
+            if(!u.id) return;
+            if(selectedAssignees.some(x => x.id === u.id)) return;
+
+            selectedAssignees.push(u);
+            selectedAssignees = uniqAssigneesById(selectedAssignees);
+            renderAssigneesList(ctx);
+
+            const els = getAssigneeEls(ctx);
+            els.$results.hide().empty();
+            els.$input.val('').trigger('focus');
+        }
+
+        function renderUserResults(ctx, users){
+            const els = getAssigneeEls(ctx);
+            els.$results.empty();
+
+            if(!users || !users.length){
+                els.$results.hide();
+                return;
+            }
+
+            users.forEach(u => {
+                const disabled = selectedAssignees.some(x => x.id === Number(u.id));
+                const $item = $(`<button type="button" class="list-group-item list-group-item-action"></button>`);
+                $item.text(u.label || u.username || u.id);
+
+                if(disabled){
+                    $item.addClass('disabled');
+                }else{
+                    $item.on('click', function(){
+                        addAssignee(ctx, u);
+                    });
+                }
+
+                els.$results.append($item);
+            });
+
+            els.$results.show();
+        }
+
+        function searchUsers(ctx, q){
+            const els = getAssigneeEls(ctx);
+
+            if(searchXHR){
+                try { searchXHR.abort(); } catch(e) {}
+                searchXHR = null;
+            }
+
+            const query = (q || '').trim();
+            if(query.length < 2){
+                els.$results.hide().empty();
+                return;
+            }
+
+            searchXHR = $.ajax({
+                url: SEARCH_USERS_URL,
+                method: 'GET',
+                data: { q: query },
+                success: function(data){
+                    renderUserResults(ctx, data);
+                },
+                error: function(){
+                    els.$results.hide().empty();
+                }
+            });
+        }
+
+        function bindAssigneeSearch(ctx){
+            const els = getAssigneeEls(ctx);
+
+            els.$input.off('input').on('input', function(){
+                const val = $(this).val();
+
+                if(searchTimer) clearTimeout(searchTimer);
+                searchTimer = setTimeout(function(){
+                    searchUsers(ctx, val);
+                }, 200);
+            });
+
+            $(document).off(`click.assignees.${ctx}`).on(`click.assignees.${ctx}`, function(e){
+                if(
+                    $(e.target).closest(els.$input).length ||
+                    $(e.target).closest(els.$results).length
+                ) return;
+                els.$results.hide();
+            });
+        }
+
+        function setActivityAssignees(activityId){
+            const url = SET_ASSIGNEES_URL_TEMPLATE.replace('__ID__', activityId);
+            const user_ids = selectedAssignees.map(x => x.id);
+
+            return $.ajax({
+                url: url,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ user_ids }),
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                dataType: 'json',
+            });
+        }
+
+        function openAddEntryModal(){
+            if(mode === "availability"){
+                const modalEl = document.getElementById('addEventModalAvailability');
+                if(!modalEl) return;
+
+                const today = new Date().toISOString().split('T')[0];
+                const startDateEl = document.querySelector('#addEventModalAvailability #start_date_availability');
+                if(startDateEl) startDateEl.value = today;
+
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
+                return;
+            }
+
+            const modalEl = document.getElementById('addActivityModal');
+            if(!modalEl) return;
+
+            const now = new Date();
+            const pad = (n) => String(n).padStart(2, '0');
+            const toLocalD = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+
+            const startEl = document.querySelector('#addActivityModal #activity_start');
+            const endEl = document.querySelector('#addActivityModal #activity_end');
+            if(startEl) startEl.value = toLocalD(now);
+
+            setAssigneesState("add", []);
+            bindAssigneeSearch("add");
+
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        }
+
+        function ensureAvailabilityCalendar(){
+            const calendarEl = document.getElementById('calendar');
+            if(!calendarEl) return null;
+
+            if(!availabilityCalendar){
+                availabilityCalendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth',
+                    headerToolbar: {
+                        start: 'dayGridMonth timeGridWeek',
+                        center: 'title',
+                        end: 'prev today next'
+                    },
+                    views: {
+                        dayGridMonth: {
+                            showNonCurrentDates: false,
+                            fixedWeekCount: false,
+                            locale: 'en',
                         },
-                        views: {
-                            dayGridMonth: {
-                                showNonCurrentDates: false,
-                                fixedWeekCount: false,
-                                locale: 'en',  // Use locale settings if necessary
-                            },
-                            timeGridWeek: {
-                                type: 'timeGrid',
-                                slotMinTime: '06:00:00',  // Minimum time on the axis (6 AM)
-                                slotMaxTime: '22:00:00'   // Maximum time on the axis (9 PM)
-                            }
-                        },
-                        firstDay: 1,  // Monday as the first day of the week
-                        selectable: true,
-                        editable: true,
-                        events: '/all_events/',
-                        displayEventTime: false,
-                        eventClick: function(info) {
-                            // Fetch event details and show the details modal
-                            $.ajax({
-                                url: '/event/' + info.event.id + '/',
-                                method: 'GET',
-                                success: function(data) {
-				    console.log(data)
-                                    var startDate = moment(data.start).format('DD-MM-YYYY HH:mm');
-                                    var endDate = moment(data.end).format('DD-MM-YYYY HH:mm');
-                                    if (data.all_day) {
-                                        var adjustedEndDate = moment(data.end).subtract(1, 'days').format('DD-MM-YYYY');
-                                        var adjustedStartDate = moment(data.start).format('DD-MM-YYYY');
-                                        $('#event-end').text(adjustedEndDate);
-                                        $('#event-start').text(adjustedStartDate);
-                                    } else {
-                                        $('#event-end').text(endDate);
-                                        $('#event-start').text(startDate);
-                                    }
-                                    $('#event-name-person').text(data.title.split(' - ')[0]);
-                                    $('#event-place').text(data.place);
-                                    $('#event-notes').text(data.notes);
-                                    $('#event-id').val(info.event.id);
-                                    {% if user.is_authenticated %}
-                                        const creator = "{{ user.username }}";
-					if(data.creator != null && creator == data.creator){
-						$('#edit-event-btn').show();
-                                        	$('#delete-event-btn').show();
-					}else if(data.creator == null || creator != data.creator){
-						$('#edit-event-btn').hide();
-						$('#delete-event-btn').hide();
-					}
-                                    {% else %}
-                                        $('#edit-event-btn').hide();
-                                        $('#delete-event-btn').hide();
-                                    {% endif %}
-                                    $('#eventDetailsModal').modal('show');
-				    
-				    $('#edit-event-btn').on('click', function(){
-					$('#eventDetailsModal').modal('hide')
-					setTimeout(function(){
-						$('#edit-event-id').val(data.id)
-                                                $('#edit-name_person').val(data.title)
-						$('#edit-full_day').change(function() {
-						    if (this.checked) {
-                                                        $('#edit-time_fields').hide();
-                                                        $('#edit-time_fields input').removeAttr('required');
-                                                    } else {
-                                                        $('#edit-time_fields').show();
-                                                        $('#edit-end_date').attr('required', 'required');
-                                                        $('#edit-start_time').attr('required', 'required');
-                                                        $('#edit-end_time').attr('required', 'required');
-                                                    }
-                                                });
-                                                $('#edit-full_day').prop('checked', data.all_day)
-						if(!data.all_day){
-						    let parsedEnd = data.end.split(' ')
-						    let parsedStart = data.start.split(' ')
-						    $('#edit-end_date').val(parsedEnd[0])
-						    $('#edit-end_time').val(parsedEnd[1])
-                                                    $('#edit-start_date').val(parsedStart[0])
-						    $('#edit-start_time').val(parsedStart[1])
-						    $('#edit-time_fields').show()
-						}else{
-						    let endDate = new Date(data.end)
-						    endDate.setDate(endDate.getDate() - 1)
-						    let parsedEnd = endDate.toISOString().split('T')[0]
-						    $('#edit-start_time').removeAttr('required')
-						    $('#edit-end_date').val(parsedEnd)
-                                                    $('#edit-start_date').val(data.start)
-						}
-                                                $('#edit-place option').each(function(index, option) {
-                                                     if (option.text === data.place) {  
-                                                            $('#edit-place')[0].selectedIndex = index;
-                                                     }
-                                                });
-                                                $('#edit-notes').val(data.notes)
-						$('#editEventModal').modal('show')
-						$('#editEventForm').on('submit', function(e) {
-                                                    e.preventDefault();
-						    var serializedData = $(this).serialize()
-						    console.log(serializedData)
-                           			    $.ajax({
-                                		        type: 'POST',
-                                       		        url: '{% url "add_event" %}',
-		                                        data: serializedData,
-                    			                dataType: "json",
-                            		                success: function (data) {
-                                    		            $('#editEventModal').modal('hide');
-                                    		            calendar.refetchEvents();
-                                    		            location.reload();
-                                		        },
-                                		        error: function(data) {
-                                    		            console.log(error);
-                                    		            location.reload(); 
-                                		        }
-                            			    });
-                        			});
-					}, 300)
-				    })
-                                }
-                            });
-                        },
-                        eventRender: function(info) {
-                            info.el.style.backgroundColor = info.event.extendedProps.color;
+                        timeGridWeek: {
+                            type: 'timeGrid',
+                            slotMinTime: '06:00:00',
+                            slotMaxTime: '22:00:00'
                         }
+                    },
+                    firstDay: 1,
+                    selectable: true,
+                    editable: false,
+                    events: '{% url "all_events" %}',
+                    displayEventTime: false,
+                    eventClick: function(info) {
+                        $.ajax({
+                            url: '/event/' + info.event.id + '/',
+                            method: 'GET',
+                            success: function(data) {
+                                var startDate = moment(data.start).format('DD-MM-YYYY HH:mm');
+                                var endDate = moment(data.end).format('DD-MM-YYYY HH:mm');
+
+                                if (data.all_day) {
+                                    var adjustedEndDate = moment(data.end).subtract(1, 'days').format('DD-MM-YYYY');
+                                    var adjustedStartDate = moment(data.start).format('DD-MM-YYYY');
+                                    $('#event-end-availability').text(adjustedEndDate);
+                                    $('#event-start-availability').text(adjustedStartDate);
+                                } else {
+                                    $('#event-end-availability').text(endDate);
+                                    $('#event-start-availability').text(startDate);
+                                }
+
+                                $('#event-name-person-availability').text(data.title);
+                                $('#event-place-availability').text(data.place);
+                                $('#event-notes-availability').text(data.notes);
+                                $('#event-id-availability').val(info.event.id);
+
+                                {% if user.is_authenticated %}
+                                    const creator = "{{ user.username }}";
+                                    if(data.creator != null && creator == data.creator){
+                                        $('#edit-event-btn-availability').show();
+                                        $('#delete-event-btn-availability').show();
+                                    }else{
+                                        $('#edit-event-btn-availability').hide();
+                                        $('#delete-event-btn-availability').hide();
+                                    }
+                                {% else %}
+                                    $('#edit-event-btn-availability').hide();
+                                    $('#delete-event-btn-availability').hide();
+                                {% endif %}
+
+                                $('#eventDetailsModalAvailability').modal('show');
+
+                                $('#edit-event-btn-availability')
+                                    .off('click')
+                                    .on('click', function(){
+                                        $('#eventDetailsModalAvailability').modal('hide');
+                                        setTimeout(function(){
+                                            $('#edit-event-id-availability').val(data.id);
+                                            $('#edit-name_person-availability').val(data.title);
+
+                                            $('#edit-full_day-availability').off('change').on('change', function() {
+                                                if (this.checked) {
+                                                    $('#edit-time_fields-availability').hide();
+                                                    $('#edit-time_fields-availability input').removeAttr('required');
+                                                } else {
+                                                    $('#edit-time_fields-availability').show();
+                                                    $('#edit-end_date-availability').attr('required', 'required');
+                                                    $('#edit-start_time-availability').attr('required', 'required');
+                                                    $('#edit-end_time-availability').attr('required', 'required');
+                                                }
+                                            });
+
+                                            $('#edit-full_day-availability').prop('checked', data.all_day);
+
+                                            if(!data.all_day){
+                                                let parsedEnd = data.end.split(' ');
+                                                let parsedStart = data.start.split(' ');
+                                                $('#edit-end_date-availability').val(parsedEnd[0]);
+                                                $('#edit-end_time-availability').val(parsedEnd[1]);
+                                                $('#edit-start_date-availability').val(parsedStart[0]);
+                                                $('#edit-start_time-availability').val(parsedStart[1]);
+                                                $('#edit-time_fields-availability').show();
+                                            }else{
+                                                let endDateObj = new Date(data.end);
+                                                endDateObj.setDate(endDateObj.getDate() - 1);
+                                                let parsedEnd = endDateObj.toISOString().split('T')[0];
+                                                $('#edit-start_time-availability').removeAttr('required');
+                                                $('#edit-end_date-availability').val(parsedEnd);
+                                                $('#edit-start_date-availability').val(data.start);
+                                                $('#edit-time_fields-availability').hide();
+                                                $('#edit-time_fields-availability input').removeAttr('required');
+                                            }
+
+                                            $('#edit-place-availability option').each(function(index, option) {
+                                                if (option.text === data.place) {
+                                                    $('#edit-place-availability')[0].selectedIndex = index;
+                                                }
+                                            });
+
+                                            $('#edit-notes-availability').val(data.notes);
+                                            $('#editEventModalAvailability').modal('show');
+
+                                            $('#editEventFormAvailability')
+                                                .off('submit')
+                                                .on('submit', function(e) {
+                                                    e.preventDefault();
+                                                    $.ajax({
+                                                        type: 'POST',
+                                                        url: '{% url "add_event" %}',
+                                                        data: $(this).serialize(),
+                                                        dataType: "json",
+                                                        success: function (resp) {
+                                                            $('#editEventModalAvailability').modal('hide');
+                                                            availabilityCalendar.refetchEvents();
+                                                            showToast(resp?.message || "Availability updated", "success");
+                                                        },
+                                                        error: function(e) {
+                                                            const msg = e?.responseJSON?.message || "Error saving availability";
+                                                            showToast(msg, "error");
+                                                        }
+                                                    });
+                                                });
+                                        }, 300);
+                                    });
+                            }
+                        });
+                    },
+                    eventDidMount: function(info) {
+                        info.el.style.backgroundColor = info.event.extendedProps.color;
+                    }
+                });
+
+                let eventIdToDeleteAvailability = null;
+
+                $('#delete-event-btn-availability')
+                    .off('click')
+                    .on('click', function() {
+                        eventIdToDeleteAvailability = $('#event-id-availability').val();
+                        $('#confirmDeleteModalAvailability').modal('show');
                     });
-                    calendar.render();
 
-                    var eventIdToDelete;
-
-                    $('#delete-event-btn').on('click', function() {
-                        eventIdToDelete = $('#event-id').val();
-                        $('#confirmDeleteModal').modal('show');
-                    });
-
-                    $('#confirmDeleteButton').on('click', function() {
+                $('#confirmDeleteButtonAvailability')
+                    .off('click')
+                    .on('click', function() {
                         $.ajax({
                             type: 'POST',
-                            url: '/remove_event/',
+                            url: '{% url "remove_event" %}',
                             data: {
-                                id: eventIdToDelete,
+                                id: eventIdToDeleteAvailability,
                                 csrfmiddlewaretoken: '{{ csrf_token }}'
                             },
                             dataType: "json",
-                            success: function(response) {
-                                $('#eventDetailsModal').modal('hide');
-                                $('#confirmDeleteModal').modal('hide');
-                                calendar.refetchEvents();
-                                location.reload();
+                            success: function(resp) {
+                                $('#eventDetailsModalAvailability').modal('hide');
+                                $('#confirmDeleteModalAvailability').modal('hide');
+                                availabilityCalendar.refetchEvents();
+                                showToast(resp?.message || "Availability deleted", "success");
                             },
-                            error: function(response) {
-                                console.log(error);
-                                location.reload();
+                            error: function(e) {
+                                const msg = e?.responseJSON?.message || "Error deleting availability";
+                                showToast(msg, "error");
                             }
                         });
                     });
-		    
-		    $('#addEventModal').on('show.bs.modal', function (){
-			const today = new Date().toISOString().split('T')[0];
-			document.querySelector('#addEventModal #start_date').value = today;
-		    });
 
-                    $('#addEventModal').on('hidden.bs.modal', function () {
-                        $('#addEventForm').trigger('reset');
-                        $('#time_fields input').removeAttr('required');
+                $('#addEventModalAvailability')
+                    .off('hidden.bs.modal')
+                    .on('hidden.bs.modal', function () {
+                        $('#addEventFormAvailability').trigger('reset');
+                        $('#time_fields_availability input').removeAttr('required');
                     });
 
-                    $('#full_day').change(function() {
+                $('#full_day_availability')
+                    .off('change')
+                    .on('change', function() {
                         if (this.checked) {
-                            $('#time_fields').hide();
-                            $('#time_fields input').removeAttr('required');
+                            $('#time_fields_availability').hide();
+                            $('#time_fields_availability input').removeAttr('required');
                         } else {
-                            $('#time_fields').show();
-                            $('#end_date').attr('required', 'required');
-                            $('#start_time').attr('required', 'required');
-                            $('#end_time').attr('required', 'required');
+                            $('#time_fields_availability').show();
+                            $('#end_date_availability').attr('required', 'required');
+                            $('#start_time_availability').attr('required', 'required');
+                            $('#end_time_availability').attr('required', 'required');
                         }
                     });
 
-                    $('#addEventForm').on('submit', function(e) {
+                $('#addEventFormAvailability')
+                    .off('submit')
+                    .on('submit', function(e) {
                         e.preventDefault();
                         $.ajax({
                             type: 'POST',
                             url: '{% url "add_event" %}',
                             data: $(this).serialize(),
                             dataType: "json",
-                            success: function (data) {
-                                $('#addEventModal').modal('hide');
-                                calendar.refetchEvents();
-                                location.reload();  // Reload page to show success message
+                            success: function (resp) {
+                                $('#editEventModalAvailability').modal('hide');
+                                availabilityCalendar.refetchEvents();
+                                showToast(resp?.message || "Availability created", "success");
                             },
-                            error: function(data) {
-                                console.log(error);
-                                location.reload();  // Reload page to show success message
+                            error: function(e) {
+                                const msg = e?.responseJSON?.message || "Error creating availability";
+                                showToast(msg, "error");
                             }
                         });
                     });
-                }
-            });
-
-            // Function to remove all messages after a certain duration
-            function removeMessages() {
-                var messages = document.querySelectorAll('.alert'); // Target all elements with the class .alert
-                // Loop through each message element
-                messages.forEach(function(message) {
-                    // Set timeout to remove the message after 5 seconds
-                    setTimeout(function() {
-                        message.remove();
-                    }, 5000); // 5000 milliseconds = 5 seconds
-                });
             }
 
-            // Call the function when the page is ready
-            document.addEventListener('DOMContentLoaded', function() {
-                removeMessages(); // Remove messages when the page is loaded
-            });
-        </script>
-    </body>
-    </html>
+            return availabilityCalendar;
+        }
+
+        function ensureActivitiesCalendar(){
+            const calendarEl = document.getElementById('calendar');
+            if(!calendarEl) return null;
+
+            if(!activitiesCalendar){
+                activitiesCalendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridWeek',
+                    headerToolbar: {
+                        left: 'dayGridWeek,dayGridDay',
+                        center: 'title',
+                        right: 'prev,next'
+                    },
+                    firstDay: 1,
+                    selectable: true,
+                    editable: false,
+                    events: '{% url "all_activities" %}',
+                    eventDisplay: 'block',
+                    displayEventTime: false,
+                    eventClick: function(info) {
+                        $.ajax({
+                            url: '/activity/' + info.event.id + '/',
+                            method: 'GET',
+                            success: function(data) {
+                                $('#event-id-activities').val(data.id);
+
+                                $('#activity-name-details').text(data.name_activity);
+                                $('#activity-start-details').text(moment(data.start, "YYYY-MM-DD").format('DD-MM-YYYY'));
+                                console.log(data.end)
+                                if(data.end != null){
+                                    $('#activity-end-details').text(moment(data.end, "YYYY-MM-DD").format('DD-MM-YYYY'));
+                                }else{
+                                    $('#activity-end-details').text("None");
+                                }
+                                $('#activity-status-details').text(data.status_display);
+                                $('#activity-telescope-details').text(data.telescope_display);
+                                $('#activity-comments-details').html(linkify(data.comments || ""));
+                                $('#activity-description-details').html(linkify(data.description || ""));
+                                if(data.assignees && data.assignees.length){
+                                    const names = data.assignees.map(u => u.label).join(", ");
+                                    $('#activity-assignees-details').text(names);
+                                } else {
+                                    $('#activity-assignees-details').text("None assigned");
+                                }
+
+                                {% if user.is_authenticated %}
+                                    $('#edit-event-btn-activities').show();
+                                    $('#delete-event-btn-activities').show();
+                                {% else %}
+                                    $('#edit-event-btn-activities').hide();
+                                    $('#delete-event-btn-activities').hide();
+                                {% endif %}
+
+                                $('#eventDetailsModalActivities').modal('show');
+
+                                $('#edit-event-btn-activities')
+                                    .off('click')
+                                    .on('click', function(){
+                                        $('#eventDetailsModalActivities').modal('hide');
+                                        setTimeout(function(){
+                                            $('#edit-event-id-activities').val(data.id);
+                                            $('#edit_name_activity').val(data.name_activity);
+
+                                            const toDTLocal = (s) => s ? s.replace(' ', 'T') : "";
+
+                                            $('#edit_activity_start').val(toDTLocal(data.start));
+                                            $('#edit_activity_end').val(toDTLocal(data.end));
+                                            $('#edit_activity_status').val(data.status);
+                                            $('#edit_activity_telescope').val(data.telescope);
+                                            $('#edit_activity_comments').val(data.comments || "");
+                                            $('#edit_activity_description').val(data.description || "");
+
+                                            setAssigneesState("edit", data.assignees || []);
+                                            bindAssigneeSearch("edit");
+
+                                            $('#editEventModalActivities').modal('show');
+
+                                            $('#editEventFormActivities')
+                                                .off('submit')
+                                                .on('submit', function(e) {
+                                                    e.preventDefault();
+                                                    $.ajax({
+                                                        type: 'POST',
+                                                        url: '{% url "add_activity" %}',
+                                                        data: $(this).serialize(),
+                                                        dataType: "json",
+                                                        success: function (resp) {
+                                                            const activityId = resp?.id || data.id;
+
+                                                            setActivityAssignees(activityId)
+                                                                .done(function(){
+                                                                    $('#editEventModalActivities').modal('hide');
+                                                                    activitiesCalendar.refetchEvents();
+                                                                    showToast(resp?.message || "Activity updated", "success");
+                                                                })
+                                                                .fail(function(e2){
+                                                                    const msg = e2?.responseJSON?.message || "Error updating assignees";
+                                                                    showToast(msg, "error");
+                                                                });
+                                                        },
+                                                        error: function(e) {
+                                                            const msg = e?.responseJSON?.message || "Error saving activity";
+                                                            showToast(msg, "error");
+                                                        }
+                                                    });
+                                                });
+                                        }, 300);
+                                    });
+                            }
+                        });
+                    },
+                    eventRender: function(info) {
+                        info.el.style.backgroundColor = info.event.extendedProps.color;
+                    }
+                });
+
+                let eventIdToDeleteActivities = null;
+
+                $('#delete-event-btn-activities')
+                    .off('click')
+                    .on('click', function() {
+                        eventIdToDeleteActivities = $('#event-id-activities').val();
+                        $('#confirmDeleteModalActivities').modal('show');
+                    });
+
+                $('#confirmDeleteButtonActivities')
+                    .off('click')
+                    .on('click', function() {
+                        $.ajax({
+                            type: 'POST',
+                            url: '{% url "remove_activity" %}',
+                            data: {
+                                id: eventIdToDeleteActivities,
+                                csrfmiddlewaretoken: '{{ csrf_token }}'
+                            },
+                            dataType: "json",
+                            success: function(resp) {
+                                $('#eventDetailsModalActivities').modal('hide');
+                                $('#confirmDeleteModalActivities').modal('hide');
+                                activitiesCalendar.refetchEvents();
+                                showToast(resp?.message || "Activity deleted", "success");
+                            },
+                            error: function(e) {
+                                const msg = e?.responseJSON?.message || "Error deleting activity";
+                                showToast(msg, "error");
+                            }
+                        });
+                    });
+
+                $('#addActivityModal')
+                    .off('hidden.bs.modal')
+                    .on('hidden.bs.modal', function () {
+                        $('#addActivityForm').trigger('reset');
+                        setAssigneesState("add", []);
+                    });
+
+                $('#editEventModalActivities')
+                    .off('hidden.bs.modal')
+                    .on('hidden.bs.modal', function () {
+                        setAssigneesState("edit", []);
+                    });
+
+                $('#addActivityForm')
+                    .off('submit')
+                    .on('submit', function(e) {
+                        e.preventDefault();
+                        $.ajax({
+                            type: 'POST',
+                            url: '{% url "add_activity" %}',
+                            data: $(this).serialize(),
+                            dataType: "json",
+                            success: function (resp) {
+                                const activityId = resp?.id;
+                                if(!activityId){
+                                    showToast("Activity created but no id returned", "error");
+                                    return;
+                                }
+
+                                setActivityAssignees(activityId)
+                                    .done(function(){
+                                        $('#addActivityModal').modal('hide');
+                                        activitiesCalendar.refetchEvents();
+                                        showToast(resp?.message || "Activity created", "success");
+                                    })
+                                    .fail(function(e2){
+                                        const msg = e2?.responseJSON?.message || "Error setting assignees";
+                                        showToast(msg, "error");
+                                    });
+                            },
+                            error: function(e) {
+                                const msg = e?.responseJSON?.message || "Error creating activity";
+                                showToast(msg, "error");
+                            }
+                        });
+                    });
+
+                bindAssigneeSearch("add");
+                bindAssigneeSearch("edit");
+            }
+
+            return activitiesCalendar;
+        }
+
+        function renderCalendar(modeToRender){
+            hideAllOpenModals();
+
+            if(activeCalendar){
+                activeCalendar.destroy();
+                activeCalendar = null;
+            }
+
+            if(modeToRender === "availability"){
+                activeCalendar = ensureAvailabilityCalendar();
+            }else{
+                activeCalendar = ensureActivitiesCalendar();
+            }
+
+            if(activeCalendar){
+                activeCalendar.render();
+            }
+        }
+
+        $(document).ready(function() {
+            showToastFromQueryParams();
+
+            const calendarEl = document.getElementById('calendar');
+            if (!calendarEl) return;
+
+            $(document)
+                .off('click', 'a.nav-link[data-bs-target="#addEventModal"]')
+                .on('click', 'a.nav-link[data-bs-target="#addEventModal"]', function(e){
+                    e.preventDefault();
+                    openAddEntryModal();
+                });
+
+            $(document)
+                .off('click', '.contenSelector .availability')
+                .on('click', '.contenSelector .availability', function(){
+                    if(mode === "availability") return;
+                    setActiveTab("availability");
+                    renderCalendar("availability");
+                });
+
+            $(document)
+                .off('click', '.contenSelector .activities')
+                .on('click', '.contenSelector .activities', function(){
+                    if(mode === "activities") return;
+                    setActiveTab("activities");
+                    renderCalendar("activities");
+                });
+
+            setActiveTab("availability");
+            renderCalendar("availability");
+        });
+    </script>
+
+
+</html>

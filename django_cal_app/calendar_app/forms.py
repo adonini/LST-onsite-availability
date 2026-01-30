@@ -1,11 +1,11 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import Event
+from .models import Availability
 
 
-class EventForm(forms.ModelForm):
+class AvailabilityForm(forms.ModelForm):
     class Meta:
-        model = Event
+        model = Availability
         fields = ['name_person', 'start', 'end', 'place', 'notes', 'all_day']
 
     def clean(self):
