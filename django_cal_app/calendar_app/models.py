@@ -27,7 +27,7 @@ class Activity(models.Model):
     start = models.DateTimeField()
     end = models.DateTimeField(null=True)
     status = models.CharField(choices={"OG": "On Going", "OH": "On hold", "C": "Completed"}, max_length=100)
-    telescope = models.CharField(choices={"LST1": "LST1", "LST2": "LST2", "LST3": "LST3", "LST4":"LST4"}, max_length=100)
+    telescope = models.CharField(choices={"Common": "Common", "LST1": "LST1", "LST2": "LST2", "LST3": "LST3", "LST4":"LST4"}, max_length=100)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_activity')
     deleted_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='deleted_activity')
     comments = models.TextField(null=True, blank=True)
