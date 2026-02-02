@@ -1,0 +1,128 @@
+[
+  {
+    "title": "Año Nuevo",
+    "start": "2026-01-01",
+    "allDay": true,
+    "display": "background",
+    "backgroundColor": "#ffcece",
+    "borderColor": "#ffcece",
+    "textColor": "#530000"
+  },
+  {
+    "title": "Epifanía del Señor",
+    "start": "2026-01-06",
+    "allDay": true,
+    "display": "background",
+    "backgroundColor": "#ffcece",
+    "borderColor": "#ffcece",
+    "textColor": "#530000"
+  },
+  {
+    "title": "San José (Breña Baja)",
+    "start": "2026-03-19",
+    "allDay": true,
+    "display": "background",
+    "backgroundColor": "#ffcece",
+    "borderColor": "#ffcece",
+    "textColor": "#530000"
+  },
+  {
+    "title": "Viernes Santo",
+    "start": "2026-04-03",
+    "allDay": true,
+    "display": "background",
+    "backgroundColor": "#ffcece",
+    "borderColor": "#ffcece",
+    "textColor": "#530000"
+  },
+  {
+    "title": "Jueves Santo (Canarias)",
+    "start": "2026-04-02",
+    "allDay": true,
+    "display": "background",
+    "backgroundColor": "#ffcece",
+    "borderColor": "#ffcece",
+    "textColor": "#530000"
+  },
+  {
+    "title": "Día del Trabajo",
+    "start": "2026-05-01",
+    "allDay": true,
+    "display": "background",
+    "backgroundColor": "#ffcece",
+    "borderColor": "#ffcece",
+    "textColor": "#530000"
+  },
+  {
+    "title": "Día de Canarias",
+    "start": "2026-05-30",
+    "allDay": true,
+    "display": "background",
+    "backgroundColor": "#ffcece",
+    "borderColor": "#ffcece",
+    "textColor": "#530000"
+  },
+  {
+    "title": "Nuestra Señora de Las Nieves (La Palma)",
+    "start": "2026-08-05",
+    "allDay": true,
+    "display": "background",
+    "backgroundColor": "#ffcece",
+    "borderColor": "#ffcece",
+    "textColor": "#530000"
+  },
+  {
+    "title": "Asunción de la Virgen",
+    "start": "2026-08-15",
+    "allDay": true,
+    "display": "background",
+    "backgroundColor": "#ffcece",
+    "borderColor": "#ffcece",
+    "textColor": "#530000"
+  },
+  {
+    "title": "Nuestra Señora del Rosario (Breña Baja)",
+    "start": "2026-10-07",
+    "allDay": true,
+    "display": "background",
+    "backgroundColor": "#ffcece",
+    "borderColor": "#ffcece",
+    "textColor": "#530000"
+  },
+  {
+    "title": "Fiesta Nacional de España",
+    "start": "2026-10-12",
+    "allDay": true,
+    "display": "background",
+    "backgroundColor": "#ffcece",
+    "borderColor": "#ffcece",
+    "textColor": "#530000"
+  },
+  {
+    "title": "Lunes posterior a Todos los Santos (Canarias)",
+    "start": "2026-11-02",
+    "allDay": true,
+    "display": "background",
+    "backgroundColor": "#ffcece",
+    "borderColor": "#ffcece",
+    "textColor": "#530000"
+  },
+  {
+    "title": "Inmaculada Concepción",
+    "start": "2026-12-08",
+    "allDay": true,
+    "display": "background",
+    "backgroundColor": "#ffcece",
+    "borderColor": "#ffcece",
+    "textColor": "#530000"
+  },
+  {
+    "title": "Navidad",
+    "start": "2026-12-25",
+    "allDay": true,
+    "display": "background",
+    "backgroundColor": "#ffcece",
+    "borderColor": "#ffcece",
+    "textColor": "#530000"
+  }
+]

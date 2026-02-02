@@ -732,7 +732,10 @@
                     firstDay: 1,
                     selectable: true,
                     editable: false,
-                    events: '{% url "all_events" %}',
+                    eventSources: [
+                        { url: '{% url "all_events" %}', method: 'GET'},
+                        { url: '{% static "holidays/2026_holidays.json" %}', method: 'GET', display: 'background' }
+                    ],
                     displayEventTime: false,
                     eventClick: function(info) {
                         $.ajax({
@@ -947,7 +950,10 @@
                     firstDay: 1,
                     selectable: true,
                     editable: false,
-                    events: '{% url "all_activities" %}',
+                    eventSources: [
+                        { url: '{% url "all_activities" %}', method: 'GET'},
+                        { url: '{% static "holidays/2026_holidays.json" %}', method: 'GET', display: 'background' }
+                    ],
                     eventDisplay: 'block',
                     displayEventTime: false,
                     eventClick: function(info) {
