@@ -382,7 +382,7 @@ def all_activities(request):
             "id": activity.id,
             "title": f"[{activity.telescope}] {activity.name_activity} - {status_label}",
             "start": activity.start.isoformat(),
-            "end": activity.end.isoformat() if activity.end else None,
+            "end": (activity.end + timedelta(days=1)).isoformat() if activity.end else None,
             "color": status_color,
             "classNames": ["activity-event"],
         })
