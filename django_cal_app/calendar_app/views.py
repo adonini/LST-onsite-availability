@@ -377,12 +377,18 @@ def all_activities(request):
     for activity in activities:
         status_color = status_color_map.get(activity.status, '#000000')  # Default to black
         status_label = status_label_map.get(activity.status, activity.status)
+        activity_end = None
 
+        if activity.end:
+            if activity.end.date() > activity.start.date():
+                activity_end = (activity.end + timedelta(days=1)).isoformat()
+            else:
+                activity_end = activity.end.isoformat()
         activities_list.append({
             "id": activity.id,
             "title": f"[{activity.telescope}] {activity.name_activity} - {status_label}",
             "start": activity.start.isoformat(),
-            "end": (activity.end + timedelta(days=1)).isoformat() if activity.end else None,
+            "end": activity_end,
             "color": status_color,
             "classNames": ["activity-event"],
         })
