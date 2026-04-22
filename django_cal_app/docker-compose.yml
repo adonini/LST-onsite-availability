@@ -7,11 +7,23 @@ services:
     build: .
     command: ./entrypoint.sh
     restart: always
+    environment:
+      EMAIL_HOST: mailer
+      EMAIL_PORT: "25"
+      ONSITE_EVENTS_JSON_PATHS: /data/onsite/lst1_events.json
     volumes:
       - .:/code
+      - /home/www/git/lst.iac.es/website/public/travel/lst1_events.json:/data/onsite/lst1_events.json:ro
       - /home/lst1/lst-onsite-availability/db_data/db.sqlite3:/db.sqlite3
       - /home/lst1/lst-onsite-availability/logs:/logs
       - static:/code/staticfiles
+  mailer:
+    image: boky/postfix
+    container_name: mailer_cal
+    environment:
+      ALLOW_EMPTY_SENDER_DOMAINS: "yes"
+      POSTFIX_mynetworks: "127.0.0.0/8 172.16.0.0/12 192.168.0.0/16"
+    restart: unless-stopped
   nginx:
     image: nginx
     ports:

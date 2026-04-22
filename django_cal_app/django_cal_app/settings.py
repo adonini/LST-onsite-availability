@@ -34,7 +34,11 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '161.72.87.51']
-CSRF_TRUSTED_ORIGINS = ["https://calendar.lst.iac.es"]
+CSRF_TRUSTED_ORIGINS = [
+    "https://calendar.lst.iac.es",
+    "https://calendar.lst1.iac.es",
+    "http://localhost:8088",
+]
 
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
@@ -148,6 +152,47 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 LOGIN_URL = '/login'
 LOGOUT_URL = '/logout'
+
+EMAIL_BACKEND = os.environ.get(
+    'EMAIL_BACKEND',
+    'django.core.mail.backends.smtp.EmailBackend',
+)
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'mailer')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '25'))
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'false').lower() == 'true'
+EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'false').lower() == 'true'
+DEFAULT_FROM_EMAIL = os.environ.get(
+    'DEFAULT_FROM_EMAIL',
+    'lst-onsite@cta-observatory.org',
+)
+
+ORM_STAFF_EMAIL_TO = [
+    email.strip()
+    for email in os.environ.get('ORM_STAFF_EMAIL_TO', 'receporm@iac.es').split(',')
+    if email.strip()
+]
+ORM_STAFF_EMAIL_CC = [
+    email.strip()
+    for email in os.environ.get(
+        'ORM_STAFF_EMAIL_CC',
+        'lst-lapalma-team@cta-observatory.org',
+    ).split(',')
+    if email.strip()
+]
+
+_onsite_events_paths = os.environ.get('ONSITE_EVENTS_JSON_PATHS', '').strip()
+if _onsite_events_paths:
+    ONSITE_EVENTS_JSON_PATHS = [
+        path.strip()
+        for path in _onsite_events_paths.split(os.pathsep)
+        if path.strip()
+    ]
+else:
+    ONSITE_EVENTS_JSON_PATHS = [
+        str(BASE_DIR / 'lst1_events.json'),
+    ]
 
 # replace default admin url
 ADMIN_URL = 'sys-admin/'

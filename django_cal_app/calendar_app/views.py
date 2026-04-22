@@ -292,6 +292,18 @@ def _parse_d_local(value):
     except ValueError:
         return datetime.strptime(value, '%Y-%m-%d').date()
 
+
+def _activity_calendar_dates(activity):
+    start_date = activity.start.date().isoformat()
+
+    if not activity.end:
+        return start_date, None
+
+    # Activities are edited as inclusive date ranges, but FullCalendar expects
+    # all-day event ends to be exclusive.
+    end_date = (activity.end.date() + timedelta(days=1)).isoformat()
+    return start_date, end_date
+
 @csrf_exempt
 @login_required
 def add_activity(request):
@@ -377,18 +389,13 @@ def all_activities(request):
     for activity in activities:
         status_color = status_color_map.get(activity.status, '#000000')  # Default to black
         status_label = status_label_map.get(activity.status, activity.status)
-        activity_end = None
-
-        if activity.end:
-            if activity.end.date() > activity.start.date():
-                activity_end = (activity.end + timedelta(days=1)).isoformat()
-            else:
-                activity_end = activity.end.isoformat()
+        activity_start, activity_end = _activity_calendar_dates(activity)
         activities_list.append({
             "id": activity.id,
             "title": f"[{activity.telescope}] {activity.name_activity} - {status_label}",
-            "start": activity.start.isoformat(),
+            "start": activity_start,
             "end": activity_end,
+            "allDay": True,
             "color": status_color,
             "classNames": ["activity-event"],
         })

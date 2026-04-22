@@ -504,6 +504,38 @@
             $('#addActivityModal, #eventDetailsModalActivities, #confirmDeleteModalActivities, #editEventModalActivities').modal('hide');
         }
 
+        function updateModalStack(modalEl){
+            const openModalCount = document.querySelectorAll('.modal.show').length;
+            const modalZIndex = 1055 + (openModalCount * 20);
+
+            modalEl.style.zIndex = modalZIndex;
+
+            window.setTimeout(function(){
+                const backdrops = document.querySelectorAll('.modal-backdrop.show:not(.modal-stack)');
+                const backdropEl = backdrops[backdrops.length - 1];
+                if(!backdropEl) return;
+
+                backdropEl.style.zIndex = modalZIndex - 5;
+                backdropEl.classList.add('modal-stack');
+            }, 0);
+        }
+
+        $(document)
+            .off('show.bs.modal.modalStack')
+            .on('show.bs.modal.modalStack', '.modal', function(){
+                updateModalStack(this);
+            });
+
+        $(document)
+            .off('hidden.bs.modal.modalStack')
+            .on('hidden.bs.modal.modalStack', '.modal', function(){
+                this.style.zIndex = '';
+
+                if(document.querySelector('.modal.show')){
+                    document.body.classList.add('modal-open');
+                }
+            });
+
         function getAssigneeEls(ctx){
             if(ctx === "edit"){
                 return {
