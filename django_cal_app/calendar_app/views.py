@@ -180,7 +180,8 @@ def all_events(request):
         'Remote - Off the Island': '#8c5b00',
         'Holiday': '#7600d1',
         'Holiday - Off the Island': '#4f008c',
-        'Mirca': '#008000'
+        'Mirca': '#008000',
+        'El Paso': "#19D300"
     }
 
     for event in events:

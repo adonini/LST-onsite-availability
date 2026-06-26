@@ -2,16 +2,17 @@ from ..models import Places, Availability
 
 def run():
     PLACES = [
-            "CTAO Office"
-            "Calp",
-            "Holiday",
-            "Holiday - Off the island"
-            "ORM Day",
-            "ORM Night",
-            "Mirca",
-            "Remote",
-            "Remote - Off the island"
-            ]
+        "CTAO Office",
+        "Calp",
+        "Holiday",
+        "Holiday - Off the Island",
+        "ORM Day",
+        "ORM Night",
+        "Mirca",
+        "El Paso",
+        "Remote",
+        "Remote - Off the Island",
+    ]
 
     for element in PLACES:
         Places.objects.get_or_create(
@@ -35,4 +36,3 @@ def run():
             except Places.DoesNotExist:
                 pass
             event.save()
-
