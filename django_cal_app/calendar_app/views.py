@@ -2,8 +2,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
 import logging
-from .models import Availability, Places, Activity, ActivityAssignment
+from .models import Availability, Places, Activity, ActivityAssignment, MagicSecondFloorRequest
+from .forms import MagicSecondFloorRequestForm, MagicSecondFloorRejectForm
 from django.contrib import messages
 from datetime import datetime, timedelta
 from django.contrib.auth import logout, get_user_model, login
@@ -22,9 +24,125 @@ import json
 from django.views.decorators.http import require_POST
 from django.db import transaction
 from django.db.models import Q
+from django.conf import settings
+from django.core.mail import send_mail
+from django.utils import timezone
 
 # Get an instance of a logger
 logger = logging.getLogger('calendar_app')
+
+
+def _is_lst_user(user):
+    return user.is_authenticated and user.username == "lst"
+
+
+def _lst_forbidden_response():
+    return JsonResponse(
+        {'status': 'forbidden', 'message': 'The lst user cannot perform this action'},
+        status=403,
+    )
+
+
+def _parse_dt_local(value):
+    if not value:
+        return None
+    value = value.strip()
+    for fmt in ("%Y-%m-%dT%H:%M", "%Y-%m-%d %H:%M", "%Y-%m-%dT%H:%M:%S"):
+        try:
+            dt = datetime.strptime(value, fmt)
+            if settings.USE_TZ:
+                return timezone.make_aware(dt, timezone.get_current_timezone())
+            return dt
+        except ValueError:
+            continue
+    raise ValueError("Invalid datetime format")
+
+
+def _format_magic_request(request_obj):
+    return {
+        "id": request_obj.id,
+        "name": request_obj.name,
+        "surname": request_obj.surname,
+        "institution": request_obj.institution,
+        "email": request_obj.email,
+        "task": request_obj.task,
+        "start": timezone.localtime(request_obj.start).strftime("%Y-%m-%d %H:%M"),
+        "end": timezone.localtime(request_obj.end).strftime("%Y-%m-%d %H:%M"),
+        "comments": request_obj.comments,
+        "status": request_obj.status,
+        "status_display": request_obj.get_status_display(),
+    }
+
+
+def _magic_overlaps(request_obj):
+    return MagicSecondFloorRequest.objects.filter(
+        status__in=[
+            MagicSecondFloorRequest.PENDING,
+            MagicSecondFloorRequest.APPROVED,
+        ],
+        start__lt=request_obj.end,
+        end__gt=request_obj.start,
+    ).exclude(pk=request_obj.pk).order_by("start")
+
+
+def _magic_event_color(request_obj):
+    palette = [
+        "#0f766e",
+        "#2563eb",
+        "#7c3aed",
+        "#c2410c",
+        "#be123c",
+        "#15803d",
+        "#b45309",
+        "#4338ca",
+        "#0e7490",
+        "#a21caf",
+    ]
+    return palette[request_obj.id % len(palette)]
+
+
+def _magic_overlap_group_color(group_index):
+    palette = [
+        "#f59e0b",
+        "#2563eb",
+        "#dc2626",
+        "#16a34a",
+        "#7c3aed",
+        "#0891b2",
+        "#db2777",
+        "#65a30d",
+    ]
+    return palette[group_index % len(palette)]
+
+
+def _send_magic_request_email(request_obj, approved, reason=""):
+    full_name = f"{request_obj.name} {request_obj.surname}".strip()
+    if approved:
+        subject = "Magic 2nd Floor Usage request approved"
+        message = (
+            f"Dear {full_name},\n\n"
+            "Your Magic 2nd Floor Usage request has been approved.\n\n"
+            f"Task: {request_obj.task}\n"
+            f"Start: {timezone.localtime(request_obj.start).strftime('%Y-%m-%d %H:%M')}\n"
+            f"End: {timezone.localtime(request_obj.end).strftime('%Y-%m-%d %H:%M')}\n\n"
+            "Best regards,\nLST onsite coordination"
+        )
+    else:
+        subject = "Magic 2nd Floor Usage request rejected"
+        message = (
+            f"Dear {full_name},\n\n"
+            "Your Magic 2nd Floor Usage request has been rejected.\n\n"
+            f"Reason: {reason}\n\n"
+            "Best regards,\nLST onsite coordination"
+        )
+
+    send_mail(
+        subject,
+        message,
+        settings.DEFAULT_FROM_EMAIL,
+        [request_obj.email],
+        fail_silently=False,
+    )
 
 def logout_user(request):
     logout(request)
@@ -77,15 +195,25 @@ class FirstLoginPasswordChangeView(FormView):
 def calendar_view(request):
     all_events = Availability.objects.all()
     places = Places.objects.all().order_by('name')
+    magic_pending_count = 0
+    if request.user.is_authenticated and request.user.is_staff:
+        magic_pending_count = MagicSecondFloorRequest.objects.filter(
+            status=MagicSecondFloorRequest.PENDING,
+        ).count()
+
     context = {
         "events": all_events,
         "places": places,
+        "magic_pending_count": magic_pending_count,
     }
     return render(request, 'calendar.html', context)
 
 @csrf_exempt
 @login_required
 def add_event(request):
+    if _is_lst_user(request.user):
+        return _lst_forbidden_response()
+
     if request.method != 'POST':
         return JsonResponse({'status': 'fail', 'message': 'Invalid request method'}, status=405)
 
@@ -239,6 +367,9 @@ def event_details(request, event_id):
 @csrf_exempt
 @login_required
 def remove_event(request):
+    if _is_lst_user(request.user):
+        return _lst_forbidden_response()
+
     if request.method != 'POST':
         return JsonResponse(
             {'status': 'fail', 'message': 'Invalid request method'},
@@ -308,6 +439,9 @@ def _activity_calendar_dates(activity):
 @csrf_exempt
 @login_required
 def add_activity(request):
+    if _is_lst_user(request.user):
+        return _lst_forbidden_response()
+
     if request.method != 'POST':
         return JsonResponse({'status': 'fail', 'message': 'Invalid request method'}, status=405)
 
@@ -433,6 +567,9 @@ def activity_details(request, activity_id):
 @csrf_exempt
 @login_required
 def remove_activity(request):
+    if _is_lst_user(request.user):
+        return _lst_forbidden_response()
+
     if request.method != 'POST':
         return JsonResponse(
             {'status': 'fail', 'message': 'Invalid request method'},
@@ -475,6 +612,9 @@ def remove_activity(request):
 @login_required
 @require_POST
 def set_activity_assignees(request, activity_id):
+    if _is_lst_user(request.user):
+        return _lst_forbidden_response()
+
     activity = get_object_or_404(Activity, id=activity_id)
 
     try:
@@ -535,3 +675,183 @@ def search_users(request):
         "label": (u.get_full_name() or u.username),
         "username": u.username
     } for u in qs], safe=False)
+
+
+def magic_second_floor_view(request):
+    pending_count = 0
+    if request.user.is_staff:
+        pending_count = MagicSecondFloorRequest.objects.filter(
+            status=MagicSecondFloorRequest.PENDING,
+        ).count()
+
+    return render(request, "magic_second_floor.html", {
+        "pending_count": pending_count,
+    })
+
+
+def magic_second_floor_events(request):
+    requests_qs = MagicSecondFloorRequest.objects.filter(
+        status=MagicSecondFloorRequest.APPROVED,
+    )
+    events_list = []
+
+    for request_obj in requests_qs:
+        events_list.append({
+            "id": request_obj.id,
+            "title": f"{request_obj.name} {request_obj.surname} - {request_obj.task}",
+            "start": request_obj.start.isoformat(),
+            "end": request_obj.end.isoformat(),
+            "allDay": False,
+            "color": _magic_event_color(request_obj),
+        })
+
+    return JsonResponse(events_list, safe=False)
+
+
+def magic_second_floor_request_details(request, request_id):
+    request_obj = get_object_or_404(
+        MagicSecondFloorRequest,
+        id=request_id,
+        status=MagicSecondFloorRequest.APPROVED,
+    )
+    return JsonResponse(_format_magic_request(request_obj))
+
+
+@login_required
+@require_POST
+def create_magic_second_floor_request(request):
+    data = request.POST.copy()
+    try:
+        data["start"] = _parse_dt_local(data.get("start")).isoformat()
+        data["end"] = _parse_dt_local(data.get("end")).isoformat()
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=400)
+
+    form = MagicSecondFloorRequestForm(data)
+    if not form.is_valid():
+        return JsonResponse(
+            {"status": "error", "message": "Invalid request", "errors": form.errors},
+            status=400,
+        )
+
+    request_obj = form.save(commit=False)
+    request_obj.created_by = request.user
+    request_obj.status = MagicSecondFloorRequest.PENDING
+    request_obj.save()
+
+    return JsonResponse({
+        "status": "success",
+        "message": "Request submitted successfully. It will be reviewed by an administrator.",
+        "id": request_obj.id,
+    })
+
+
+@staff_member_required
+def magic_second_floor_pending_requests(request):
+    pending_requests = MagicSecondFloorRequest.objects.filter(
+        status=MagicSecondFloorRequest.PENDING,
+    ).order_by("start", "created_at")
+
+    pending_list = list(pending_requests)
+    pending_ids = [request_obj.id for request_obj in pending_list]
+    pending_by_id = {request_obj.id: request_obj for request_obj in pending_list}
+    adjacency = {request_obj.id: set() for request_obj in pending_list}
+    overlap_by_id = {}
+
+    for request_obj in pending_list:
+        overlaps = list(_magic_overlaps(request_obj))
+        overlap_by_id[request_obj.id] = overlaps
+        for overlap in overlaps:
+            if overlap.id in pending_by_id:
+                adjacency[request_obj.id].add(overlap.id)
+                adjacency[overlap.id].add(request_obj.id)
+
+    overlap_color_by_id = {}
+    seen = set()
+    group_index = 0
+    for request_id in pending_ids:
+        if request_id in seen:
+            continue
+
+        stack = [request_id]
+        component = []
+        seen.add(request_id)
+        while stack:
+            current_id = stack.pop()
+            component.append(current_id)
+            for related_id in adjacency[current_id]:
+                if related_id not in seen:
+                    seen.add(related_id)
+                    stack.append(related_id)
+
+        has_external_overlap = any(
+            overlap.status == MagicSecondFloorRequest.APPROVED
+            for component_id in component
+            for overlap in overlap_by_id[component_id]
+        )
+        if len(component) > 1 or has_external_overlap:
+            color = _magic_overlap_group_color(group_index)
+            group_index += 1
+            for component_id in component:
+                if overlap_by_id[component_id]:
+                    overlap_color_by_id[component_id] = color
+
+    pending_items = []
+    for request_obj in pending_list:
+        overlaps = overlap_by_id[request_obj.id]
+        pending_items.append({
+            "request": request_obj,
+            "overlaps": overlaps,
+            "overlap_color": overlap_color_by_id.get(request_obj.id),
+        })
+
+    return render(request, "magic_second_floor_pending.html", {
+        "pending_items": pending_items,
+    })
+
+
+@staff_member_required
+@require_POST
+def approve_magic_second_floor_request(request, request_id):
+    request_obj = get_object_or_404(
+        MagicSecondFloorRequest,
+        id=request_id,
+        status=MagicSecondFloorRequest.PENDING,
+    )
+
+    request_obj.status = MagicSecondFloorRequest.APPROVED
+    request_obj.reviewed_by = request.user
+    request_obj.reviewed_at = timezone.now()
+    request_obj.rejection_reason = ""
+    request_obj.save()
+
+    _send_magic_request_email(request_obj, approved=True)
+
+    messages.success(request, "Request approved and email sent.")
+    return redirect("magic_second_floor_pending")
+
+
+@staff_member_required
+@require_POST
+def reject_magic_second_floor_request(request, request_id):
+    request_obj = get_object_or_404(
+        MagicSecondFloorRequest,
+        id=request_id,
+        status=MagicSecondFloorRequest.PENDING,
+    )
+    form = MagicSecondFloorRejectForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, "Rejection reason is required.")
+        return redirect("magic_second_floor_pending")
+
+    reason = form.cleaned_data["rejection_reason"]
+    request_obj.status = MagicSecondFloorRequest.REJECTED
+    request_obj.reviewed_by = request.user
+    request_obj.reviewed_at = timezone.now()
+    request_obj.rejection_reason = reason
+    request_obj.save()
+
+    _send_magic_request_email(request_obj, approved=False, reason=reason)
+
+    messages.success(request, "Request rejected and email sent.")
+    return redirect("magic_second_floor_pending")

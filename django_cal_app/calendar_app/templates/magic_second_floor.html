@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Magic 2nd Floor Usage{% endblock title %}
+
+{% block content %}
+<style>
+    .pending-count-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 1.55rem;
+        height: 1.55rem;
+        padding: 0 0.35rem;
+        border-radius: 999px;
+        line-height: 1;
+    }
+
+    #magic-calendar .fc-daygrid-event,
+    #magic-calendar .fc-timegrid-event {
+        border-radius: 5px;
+        margin-top: 3px;
+        margin-bottom: 3px;
+        border: 0;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14);
+    }
+
+    #magic-calendar .fc-daygrid-event .fc-event-title,
+    #magic-calendar .fc-timegrid-event .fc-event-title {
+        padding: 1px 4px;
+        font-weight: 600;
+    }
+</style>
+
+<div class="contenSelector w-100 d-flex flex-wrap justify-content-center gap-3 mt-1 mb-3">
+    <a class="availability btn btn-light d-flex align-items-center rounded text-decoration-none" href="{% url 'calendar' %}">
+        <p class="buttonText mb-0">Availability</p>
+    </a>
+    <a class="activities btn btn-light d-flex align-items-center rounded text-decoration-none" href="{% url 'calendar' %}#activities">
+        <p class="buttonText mb-0">Activities</p>
+    </a>
+    <div class="magic-floor btn btn-info pe-none d-flex align-items-center rounded">
+        <p class="buttonText mb-0">Magic 2nd Floor Usage</p>
+    </div>
+</div>
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+    <h2 class="h4 mb-0">Magic 2nd Floor Usage</h2>
+    <div class="d-flex gap-2">
+        {% if user.is_staff %}
+            <a href="{% url 'magic_second_floor_pending' %}" class="btn btn-warning rounded">
+                Pending requests
+                <span class="badge text-bg-dark pending-count-badge">{{ pending_count }}</span>
+            </a>
+        {% endif %}
+        {% if user.is_authenticated %}
+            <button type="button" class="btn btn-success rounded" data-bs-toggle="modal" data-bs-target="#magicRequestModal">
+                Request
+            </button>
+        {% endif %}
+    </div>
+</div>
+
+<div id="magic-calendar"></div>
+
+<div class="modal fade" id="magicRequestModal" tabindex="-1" aria-labelledby="magicRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="magicRequestModalLabel">Request Magic 2nd Floor Usage</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="magicRequestForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="magic_name" class="form-label">Name</label>
+                            <input type="text" class="form-control" id="magic_name" name="name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="magic_surname" class="form-label">Surname</label>
+                            <input type="text" class="form-control" id="magic_surname" name="surname" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="magic_institution" class="form-label">Institution</label>
+                            <input type="text" class="form-control" id="magic_institution" name="institution" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="magic_email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="magic_email" name="email" required>
+                        </div>
+                        <div class="col-12">
+                            <label for="magic_task" class="form-label">Task</label>
+                            <input type="text" class="form-control" id="magic_task" name="task" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="magic_start" class="form-label">Start</label>
+                            <input type="datetime-local" class="form-control" id="magic_start" name="start" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="magic_end" class="form-label">End</label>
+                            <input type="datetime-local" class="form-control" id="magic_end" name="end" required>
+                        </div>
+                        <div class="col-12">
+                            <label for="magic_comments" class="form-label">Comments</label>
+                            <textarea class="form-control" id="magic_comments" name="comments" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Submit request</button>
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="magicDetailsModal" tabindex="-1" aria-labelledby="magicDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="magicDetailsModalLabel">Magic 2nd Floor Reservation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Name</dt>
+                    <dd class="col-sm-8" id="magic_detail_name"></dd>
+                    <dt class="col-sm-4">Institution</dt>
+                    <dd class="col-sm-8" id="magic_detail_institution"></dd>
+                    <dt class="col-sm-4">Email</dt>
+                    <dd class="col-sm-8" id="magic_detail_email"></dd>
+                    <dt class="col-sm-4">Task</dt>
+                    <dd class="col-sm-8" id="magic_detail_task"></dd>
+                    <dt class="col-sm-4">Start</dt>
+                    <dd class="col-sm-8" id="magic_detail_start"></dd>
+                    <dt class="col-sm-4">End</dt>
+                    <dd class="col-sm-8" id="magic_detail_end"></dd>
+                    <dt class="col-sm-4">Comments</dt>
+                    <dd class="col-sm-8" id="magic_detail_comments"></dd>
+                </dl>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+        const calendarEl = document.getElementById("magic-calendar");
+        if(!calendarEl) return;
+
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: "dayGridMonth",
+            headerToolbar: {
+                start: "dayGridMonth,timeGridWeek",
+                center: "title",
+                end: "prev,today,next"
+            },
+            views: {
+                dayGridMonth: {
+                    showNonCurrentDates: false,
+                    fixedWeekCount: false,
+                },
+                timeGridWeek: {
+                    type: "timeGrid",
+                    slotMinTime: "06:00:00",
+                    slotMaxTime: "22:00:00"
+                }
+            },
+            firstDay: 1,
+            selectable: false,
+            editable: false,
+            eventSources: [
+                { url: "{% url 'magic_second_floor_events' %}", method: "GET" },
+                { url: "{% static 'holidays/2026_holidays.json' %}", method: "GET", display: "background" }
+            ],
+            displayEventTime: false,
+            eventClick: function(info) {
+                $.ajax({
+                    url: `/magic-second-floor/request/${info.event.id}/`,
+                    method: "GET",
+                    success: function(data) {
+                        $("#magic_detail_name").text(`${data.name} ${data.surname}`);
+                        $("#magic_detail_institution").text(data.institution);
+                        $("#magic_detail_email").text(data.email);
+                        $("#magic_detail_task").text(data.task);
+                        $("#magic_detail_start").text(moment(data.start, "YYYY-MM-DD HH:mm").format("DD-MM-YYYY HH:mm"));
+                        $("#magic_detail_end").text(moment(data.end, "YYYY-MM-DD HH:mm").format("DD-MM-YYYY HH:mm"));
+                        $("#magic_detail_comments").text(data.comments || "");
+                        $("#magicDetailsModal").modal("show");
+                    },
+                    error: function(e) {
+                        const msg = e?.responseJSON?.message || "Error loading reservation details";
+                        showToast(msg, "error");
+                    }
+                });
+            }
+        });
+
+        calendar.render();
+
+        $("#magicRequestForm").on("submit", function(e){
+            e.preventDefault();
+
+            $.ajax({
+                type: "POST",
+                url: "{% url 'create_magic_second_floor_request' %}",
+                data: $(this).serialize(),
+                dataType: "json",
+                success: function(resp) {
+                    $("#magicRequestModal").modal("hide");
+                    $("#magicRequestForm").trigger("reset");
+                    showToast(resp?.message || "Request submitted", "success");
+                },
+                error: function(e) {
+                    const msg = e?.responseJSON?.message || "Error submitting request";
+                    showToast(msg, "error");
+                }
+            });
+        });
+    });
+</script>
+{% endblock extra_scripts %}

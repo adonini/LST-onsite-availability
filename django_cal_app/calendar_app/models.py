@@ -56,3 +56,52 @@ class ActivityAssignment(models.Model):
 
     class Meta:
         unique_together = ("activity", "user")
+
+
+class MagicSecondFloorRequest(models.Model):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
+    STATUS_CHOICES = {
+        PENDING: "Pending",
+        APPROVED: "Approved",
+        REJECTED: "Rejected",
+    }
+
+    name = models.CharField(max_length=100)
+    surname = models.CharField(max_length=100)
+    institution = models.CharField(max_length=200)
+    email = models.EmailField()
+    task = models.CharField(max_length=250)
+    start = models.DateTimeField()
+    end = models.DateTimeField()
+    comments = models.TextField(blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=PENDING,
+    )
+    rejection_reason = models.TextField(blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="magic_second_floor_requests_created",
+    )
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="magic_second_floor_requests_reviewed",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["start", "created_at"]
+
+    def __str__(self):
+        return f"{self.name} {self.surname} - {self.task}"

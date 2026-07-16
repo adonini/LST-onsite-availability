@@ -19,4 +19,11 @@ urlpatterns = [
     path('remove_activity/', views.remove_activity, name='remove_activity'),
     path('activity/<int:activity_id>/assignees/', views.set_activity_assignees, name='set_activity_assignees'),
     path('users/search/', views.search_users, name='search_users'),
+    path('magic-second-floor/', views.magic_second_floor_view, name='magic_second_floor'),
+    path('magic-second-floor/events/', views.magic_second_floor_events, name='magic_second_floor_events'),
+    path('magic-second-floor/request/', views.create_magic_second_floor_request, name='create_magic_second_floor_request'),
+    path('magic-second-floor/request/<int:request_id>/', views.magic_second_floor_request_details, name='magic_second_floor_request_details'),
+    path('magic-second-floor/pending/', views.magic_second_floor_pending_requests, name='magic_second_floor_pending'),
+    path('magic-second-floor/request/<int:request_id>/approve/', views.approve_magic_second_floor_request, name='approve_magic_second_floor_request'),
+    path('magic-second-floor/request/<int:request_id>/reject/', views.reject_magic_second_floor_request, name='reject_magic_second_floor_request'),
 ]

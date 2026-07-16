@@ -3,13 +3,22 @@
 {% block title %}LST Onsite availability{% endblock title %}
 
 {% block content %}
-<div class="contenSelector w-100 d-flex justify-content-center mt-1 mb-3">
-    <div class="availability btn btn-info pe-none d-flex align-items-center rounded me-3">
+<div class="contenSelector w-100 d-flex flex-wrap justify-content-center gap-3 mt-1 mb-3">
+    <div class="availability btn btn-info pe-none d-flex align-items-center rounded">
         <p class="buttonText mb-0">Availability</p>
     </div>
     <div class="activities btn btn-light d-flex align-items-center rounded">
         <p class="buttonText mb-0">Activities</p>
     </div>
+    <a class="magic-floor btn btn-light d-flex align-items-center rounded text-decoration-none position-relative" href="{% url 'magic_second_floor' %}">
+        <p class="buttonText mb-0">Magic 2nd Floor Usage</p>
+        {% if user.is_staff and magic_pending_count %}
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill text-bg-danger">
+                {{ magic_pending_count }}
+                <span class="visually-hidden">pending Magic 2nd Floor requests</span>
+            </span>
+        {% endif %}
+    </a>
 </div>
 <div class="col-md-12 mb-2">
     <div id='calendar'></div>

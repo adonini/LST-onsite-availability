@@ -1220,10 +1220,14 @@
                     renderCalendar("activities");
                 });
 
-            setActiveTab("availability");
-            renderCalendar("availability");
+            const initialMode = window.location.hash === "#activities" ? "activities" : "availability";
+            setActiveTab(initialMode);
+            renderCalendar(initialMode);
         });
     </script>
+
+    {% block extra_scripts %}
+    {% endblock extra_scripts %}
 
 
 </html>
