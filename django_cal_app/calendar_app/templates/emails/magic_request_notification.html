@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>{{ subject }}</title>
+        <style>
+            body {
+                background: #f5f5f5;
+                color: #222222;
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 24px;
+            }
+            .container {
+                background: #ffffff;
+                border: 1px solid #dddddd;
+                margin: 0 auto;
+                max-width: 860px;
+                padding: 24px 32px;
+            }
+            h1 {
+                font-size: 24px;
+                margin: 0 0 12px;
+            }
+            p {
+                line-height: 1.5;
+                margin: 8px 0 18px;
+            }
+            table {
+                border-collapse: collapse;
+                width: 100%;
+            }
+            th,
+            td {
+                border: 1px solid #dddddd;
+                padding: 10px 12px;
+                text-align: left;
+                vertical-align: top;
+            }
+            th {
+                background: #263340;
+                color: #ffffff;
+                font-size: 13px;
+                letter-spacing: 0.04em;
+                text-transform: uppercase;
+                white-space: nowrap;
+            }
+            td {
+                background: #ffffff;
+                font-size: 14px;
+            }
+            .field {
+                background: #f0f3f6;
+                color: #263340;
+                font-weight: bold;
+                width: 170px;
+            }
+            .dates {
+                display: table;
+                width: 100%;
+            }
+            .date-cell {
+                display: table-cell;
+                width: 50%;
+                padding-right: 12px;
+            }
+            .date-label {
+                color: #666666;
+                display: block;
+                font-size: 12px;
+                margin-bottom: 4px;
+                text-transform: uppercase;
+            }
+            .footer {
+                color: #666666;
+                font-size: 13px;
+                margin-top: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>{{ subject }}</h1>
+            <p>A new Magic 2nd Floor Usage request has been submitted and is waiting for review.</p>
+
+            <table>
+                <tbody>
+                    <tr>
+                        <td class="field">Name</td>
+                        <td>{{ request_obj.name }} {{ request_obj.surname }}</td>
+                    </tr>
+                    <tr>
+                        <td class="field">Institution</td>
+                        <td>{{ request_obj.institution }}</td>
+                    </tr>
+                    <tr>
+                        <td class="field">Email</td>
+                        <td><a href="mailto:{{ request_obj.email }}">{{ request_obj.email }}</a></td>
+                    </tr>
+                    <tr>
+                        <td class="field">Task</td>
+                        <td>{{ request_obj.task }}</td>
+                    </tr>
+                    <tr>
+                        <td class="field">Dates</td>
+                        <td>
+                            <div class="dates">
+                                <div class="date-cell">
+                                    <span class="date-label">Start</span>
+                                    {{ start_display }}
+                                </div>
+                                <div class="date-cell">
+                                    <span class="date-label">End</span>
+                                    {{ end_display }}
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="field">Comments</td>
+                        <td>{{ request_obj.comments|default:"No comments provided."|linebreaksbr }}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+        </div>
+    </body>
+</html>

@@ -220,7 +220,14 @@
                     showToast(resp?.message || "Request submitted", "success");
                 },
                 error: function(e) {
-                    const msg = e?.responseJSON?.message || "Error submitting request";
+                    let msg = e?.responseJSON?.message || "";
+                    const errors = e?.responseJSON?.errors;
+                    if(!msg && errors){
+                        const firstKey = Object.keys(errors)[0];
+                        const firstError = firstKey ? errors[firstKey]?.[0] : null;
+                        msg = firstError?.message || firstError || "";
+                    }
+                    msg = msg || "Error submitting request";
                     showToast(msg, "error");
                 }
             });

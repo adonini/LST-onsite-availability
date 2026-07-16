@@ -182,6 +182,23 @@ ORM_STAFF_EMAIL_CC = [
     if email.strip()
 ]
 
+MAGIC_REQUEST_NOTIFICATION_TO = [
+    email.strip()
+    for email in os.environ.get(
+        'MAGIC_REQUEST_NOTIFICATION_TO',
+        'mazin@icrr.u-tokyo.ac.jp,alice.donini@inaf.it',
+    ).split(',')
+    if email.strip()
+]
+MAGIC_REQUEST_NOTIFICATION_CC = [
+    email.strip()
+    for email in os.environ.get(
+        'MAGIC_REQUEST_NOTIFICATION_CC',
+        'apenuela@ifae.es',
+    ).split(',')
+    if email.strip()
+]
+
 _onsite_events_paths = os.environ.get('ONSITE_EVENTS_JSON_PATHS', '').strip()
 if _onsite_events_paths:
     ONSITE_EVENTS_JSON_PATHS = [

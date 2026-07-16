@@ -115,7 +115,13 @@ class MagicSecondFloorRequestTests(TestCase):
             created_by=self.lst_user,
         )
 
-    def test_create_magic_request_stores_pending_request(self):
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+        DEFAULT_FROM_EMAIL="lst-onsite@cta-observatory.org",
+        MAGIC_REQUEST_NOTIFICATION_TO=["apenuela@ifae.es"],
+        MAGIC_REQUEST_NOTIFICATION_CC=[],
+    )
+    def test_create_magic_request_stores_pending_request_and_sends_notification_email(self):
         self.client.force_login(self.lst_user)
 
         response = self.client.post(
@@ -127,6 +133,16 @@ class MagicSecondFloorRequestTests(TestCase):
         request_obj = MagicSecondFloorRequest.objects.get()
         self.assertEqual(request_obj.status, MagicSecondFloorRequest.PENDING)
         self.assertEqual(request_obj.created_by, self.lst_user)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ["apenuela@ifae.es"])
+        self.assertEqual(mail.outbox[0].cc, [])
+        self.assertEqual(mail.outbox[0].subject, "New Magic 2nd Floor Usage request")
+        self.assertIn("Ada Lovelace", mail.outbox[0].body)
+        self.assertEqual(len(mail.outbox[0].alternatives), 1)
+        self.assertIn("<table", mail.outbox[0].alternatives[0][0])
+        self.assertIn("Camera work", mail.outbox[0].alternatives[0][0])
+        self.assertNotIn("Best regards", mail.outbox[0].body)
+        self.assertNotIn("Best regards", mail.outbox[0].alternatives[0][0])
 
     def test_pending_magic_request_is_not_sent_to_calendar(self):
         self._create_magic_request(status=MagicSecondFloorRequest.PENDING)
@@ -135,6 +151,19 @@ class MagicSecondFloorRequestTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), [])
+
+    def test_create_magic_request_returns_specific_validation_error(self):
+        self.client.force_login(self.lst_user)
+        payload = self._request_payload()
+        payload["end"] = "2026-07-19T12:00"
+
+        response = self.client.post(
+            reverse("create_magic_second_floor_request"),
+            payload,
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["message"], "End must be later than start.")
 
     def test_approved_magic_request_is_sent_to_calendar(self):
         request_obj = self._create_magic_request(status=MagicSecondFloorRequest.APPROVED)

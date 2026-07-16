@@ -25,7 +25,8 @@ from django.views.decorators.http import require_POST
 from django.db import transaction
 from django.db.models import Q
 from django.conf import settings
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives, send_mail
+from django.template.loader import render_to_string
 from django.utils import timezone
 
 # Get an instance of a logger
@@ -56,6 +57,14 @@ def _parse_dt_local(value):
         except ValueError:
             continue
     raise ValueError("Invalid datetime format")
+
+
+def _first_form_error(form):
+    errors = form.errors.get_json_data()
+    for field_errors in errors.values():
+        if field_errors:
+            return field_errors[0].get("message", "Invalid request")
+    return "Invalid request"
 
 
 def _format_magic_request(request_obj):
@@ -143,6 +152,38 @@ def _send_magic_request_email(request_obj, approved, reason=""):
         [request_obj.email],
         fail_silently=False,
     )
+
+
+def _send_magic_request_notification_email(request_obj):
+    subject = "New Magic 2nd Floor Usage request"
+    start_display = timezone.localtime(request_obj.start).strftime("%Y-%m-%d %H:%M")
+    end_display = timezone.localtime(request_obj.end).strftime("%Y-%m-%d %H:%M")
+    html_content = render_to_string("emails/magic_request_notification.html", {
+        "subject": subject,
+        "request_obj": request_obj,
+        "start_display": start_display,
+        "end_display": end_display,
+    })
+    body = (
+        "A new Magic 2nd Floor Usage request has been submitted and is waiting for review.\n\n"
+        f"Name: {request_obj.name} {request_obj.surname}\n"
+        f"Institution: {request_obj.institution}\n"
+        f"Email: {request_obj.email}\n"
+        f"Task: {request_obj.task}\n"
+        f"Start: {start_display}\n"
+        f"End: {end_display}\n"
+        f"Comments: {request_obj.comments or 'No comments provided.'}"
+    )
+
+    msg = EmailMultiAlternatives(
+        subject=subject,
+        body=body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=settings.MAGIC_REQUEST_NOTIFICATION_TO,
+        cc=settings.MAGIC_REQUEST_NOTIFICATION_CC,
+    )
+    msg.attach_alternative(html_content, "text/html")
+    msg.send()
 
 def logout_user(request):
     logout(request)
@@ -730,7 +771,7 @@ def create_magic_second_floor_request(request):
     form = MagicSecondFloorRequestForm(data)
     if not form.is_valid():
         return JsonResponse(
-            {"status": "error", "message": "Invalid request", "errors": form.errors},
+            {"status": "error", "message": _first_form_error(form), "errors": form.errors},
             status=400,
         )
 
@@ -738,6 +779,7 @@ def create_magic_second_floor_request(request):
     request_obj.created_by = request.user
     request_obj.status = MagicSecondFloorRequest.PENDING
     request_obj.save()
+    _send_magic_request_notification_email(request_obj)
 
     return JsonResponse({
         "status": "success",
