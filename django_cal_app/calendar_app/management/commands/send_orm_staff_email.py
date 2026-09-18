@@ -20,6 +20,7 @@ EXCLUDED_JSON_TITLE_SUBSTRINGS = {
     "alice donini",
     "daniel mazin",
     "stefan horn",
+    "adrien planque",
 }
 
 
