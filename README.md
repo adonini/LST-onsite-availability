@@ -40,12 +40,22 @@ an existing database so existing sessions and signed tokens remain valid.
 ### HTTPS proxy
 
 The Compose stack exposes HTTP on `${PROD_BIND_IP}:${PROD_PORT}` (port 8088 by
-default). TLS must terminate at the trusted external proxy, which must forward
-the original `Host` and **overwrite** `X-Forwarded-Proto` with `https` for HTTPS
-requests. Only that proxy should be able to reach the published port; use
-`PROD_BIND_IP=127.0.0.1` when the proxy is on the same host, or a private IP
-and firewall rules when it is remote. Do not expose this HTTP port publicly.
-`DJANGO_TRUST_PROXY_SSL_HEADER=true` is safe only with that trusted-proxy setup.
+default). TLS must terminate at the trusted external proxy, which must
+**overwrite** `X-Forwarded-Proto` with `https` for HTTPS requests. Forwarding
+the original `Host` is preferred. The current server proxy instead sends its
+upstream address as `Host` (`161.72.87.51`); when retaining that proxy
+configuration, set `PROD_BIND_IP=161.72.87.51` and include both that IP and
+the public calendar domains in `DJANGO_ALLOWED_HOSTS`. Keep the public HTTPS
+domains in `DJANGO_CSRF_TRUSTED_ORIGINS`.
+
+Only the trusted proxy should be able to reach the published port; use
+`PROD_BIND_IP=127.0.0.1` when the proxy connects to loopback, or restrict
+access to the bound IP and port with firewall rules. Do not expose this HTTP
+port publicly. `DJANGO_TRUST_PROXY_SSL_HEADER=true` is safe only with that
+trusted-proxy setup, because a direct client could otherwise forge the HTTPS
+header. The app health check sets that header for its internal HTTP request
+so `DJANGO_SECURE_SSL_REDIRECT=true` does not redirect the check away from
+the container.
 
 ### Build and start
 
