@@ -26,22 +26,35 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env_path = load_dotenv(os.path.join(BASE_DIR, '.env'))
 load_dotenv(env_path)
 
+
+def env_bool(name, default=False):
+    return os.environ.get(name, str(default)).strip().lower() in ('1', 'true', 'yes', 'on')
+
+
+def env_list(name, default):
+    return [item.strip() for item in os.environ.get(name, default).split(',') if item.strip()]
+
 # SECURITY WARNING: keep the secret key used in production secret!
 #SECRET_KEY = 'django-insecure-&9*b2*_&x0485lzb2rz*e4h2*0aqi5c+8#gkye$_!6zq#*q3sg'
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env_bool('DJANGO_DEBUG', True)
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '161.72.87.51', '192.168.0.19']
-CSRF_TRUSTED_ORIGINS = [
-    "https://calendar.lst.iac.es",
-    "https://calendar.lst1.iac.es",
-    "http://localhost:8088",
-]
+ALLOWED_HOSTS = env_list(
+    'DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,161.72.87.51,192.168.0.19'
+)
+CSRF_TRUSTED_ORIGINS = env_list(
+    'DJANGO_CSRF_TRUSTED_ORIGINS',
+    'https://calendar.lst.iac.es,https://calendar.lst1.iac.es,http://localhost:8088',
+)
 
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = env_bool('DJANGO_SECURE_COOKIES', True)
+SESSION_COOKIE_SECURE = env_bool('DJANGO_SECURE_COOKIES', True)
+SECURE_SSL_REDIRECT = env_bool('DJANGO_SECURE_SSL_REDIRECT', False)
+SECURE_HSTS_SECONDS = int(os.environ.get('DJANGO_SECURE_HSTS_SECONDS', '0'))
+if env_bool('DJANGO_TRUST_PROXY_SSL_HEADER', False):
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Application definition
 
@@ -95,7 +108,7 @@ WSGI_APPLICATION = 'django_cal_app.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': os.environ.get('DJANGO_DB_PATH', str(BASE_DIR / 'db.sqlite3')),
     }
 }
 

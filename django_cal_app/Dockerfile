@@ -1,4 +1,4 @@
-FROM python:3.10
+FROM python:3.12-slim
 
 # set environment variables
 ENV PYTHONUNBUFFERED=1
@@ -9,7 +9,7 @@ WORKDIR /code
 
 # install dependencies
 COPY requirements_django.txt /code/
-RUN pip install -r requirements_django.txt
+RUN pip install --no-cache-dir -r requirements_django.txt
 
 # create logs directory and log file
 RUN mkdir -p /logs
@@ -19,10 +19,10 @@ RUN chmod -R 755 /logs
 # copy project
 COPY . /code/
 
-RUN python manage.py collectstatic --noinput
-
 # ensure the entrypoint script has execute permission
 RUN chmod +x /code/entrypoint.sh
+
+CMD ["./entrypoint.sh"]
 
 #EXPOSE 8000
 

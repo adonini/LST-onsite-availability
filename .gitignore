@@ -75,6 +75,10 @@ wheels/
 
 # Environments
 .env
+.env.*
+!.env.example
+!.env.prod.example
+prod-smoke-data/
 .venv
 env/
 venv/

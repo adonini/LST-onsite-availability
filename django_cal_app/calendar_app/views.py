@@ -1,6 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 import logging
@@ -339,7 +338,6 @@ def calendar_view(request):
     }
     return render(request, 'calendar.html', context)
 
-@csrf_exempt
 @login_required
 def add_event(request):
     if _is_lst_user(request.user):
@@ -495,7 +493,6 @@ def event_details(request, event_id):
         }
     return JsonResponse(event_data)
 
-@csrf_exempt
 @login_required
 def remove_event(request):
     if _is_lst_user(request.user):
@@ -567,7 +564,6 @@ def _activity_calendar_dates(activity):
     end_date = (activity.end.date() + timedelta(days=1)).isoformat()
     return start_date, end_date
 
-@csrf_exempt
 @login_required
 def add_activity(request):
     if _is_lst_user(request.user):
@@ -692,10 +688,12 @@ def activity_details(request, activity_id):
         "telescope": activity.telescope,
         "telescope_display": activity.get_telescope_display(),
         "comments": activity.comments,
+        "can_manage": request.user.is_authenticated and not _is_lst_user(request.user) and (
+            request.user.is_staff or activity.created_by_id == request.user.id
+        ),
         "assignees": [{"id": u["id"], "label": label(u), "username": u["username"]} for u in assignees],
     })
 
-@csrf_exempt
 @login_required
 def remove_activity(request):
     if _is_lst_user(request.user):
@@ -716,6 +714,11 @@ def remove_activity(request):
 
     try:
         activity = get_object_or_404(Activity, id=activity_id)
+        if not request.user.is_staff and activity.created_by_id != request.user.id:
+            return JsonResponse(
+                {'status': 'forbidden', 'message': 'Only the creator or an administrator can delete this activity'},
+                status=403,
+            )
 
         activity_info = (
             f'Activity ID: {activity.id}, Name: {activity.name_activity}, '
@@ -739,7 +742,6 @@ def remove_activity(request):
             status=400
         )
 
-@csrf_exempt
 @login_required
 @require_POST
 def set_activity_assignees(request, activity_id):
@@ -747,6 +749,11 @@ def set_activity_assignees(request, activity_id):
         return _lst_forbidden_response()
 
     activity = get_object_or_404(Activity, id=activity_id)
+    if not request.user.is_staff and activity.created_by_id != request.user.id:
+        return JsonResponse(
+            {'status': 'forbidden', 'message': 'Only the creator or an administrator can change assignees'},
+            status=403,
+        )
 
     try:
         payload = json.loads(request.body.decode("utf-8") or "{}")

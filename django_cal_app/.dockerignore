@@ -1,0 +1,10 @@
+.env
+.env.*
+*.sqlite3
+db_data/
+logs/
+staticfiles/
+__pycache__/
+*.pyc
+.git/
+.codex

@@ -381,7 +381,7 @@
                                 <textarea class="form-control" id="edit_activity_comments" name="comments"></textarea>
                             </div>
 
-                            <div class="mb-3">
+                            <div class="mb-3" id="edit-activity-assignees">
                                 <label class="form-label">Assignees</label>
 
                                 <input type="text" class="form-control" id="activity_assignee_search_edit" placeholder="Search user..." autocomplete="off" />
@@ -1016,11 +1016,10 @@
 
                                 {% if user.is_authenticated %}
                                     $('#edit-event-btn-activities').show();
-                                    $('#delete-event-btn-activities').show();
                                 {% else %}
                                     $('#edit-event-btn-activities').hide();
-                                    $('#delete-event-btn-activities').hide();
                                 {% endif %}
+                                $('#delete-event-btn-activities').toggle(!!data.can_manage);
 
                                 $('#eventDetailsModalActivities').modal('show');
 
@@ -1041,8 +1040,11 @@
                                             $('#edit_activity_comments').val(data.comments || "");
                                             $('#edit_activity_description').val(data.description || "");
 
-                                            setAssigneesState("edit", data.assignees || []);
-                                            bindAssigneeSearch("edit");
+                                            $('#edit-activity-assignees').toggle(!!data.can_manage);
+                                            if (data.can_manage) {
+                                                setAssigneesState("edit", data.assignees || []);
+                                                bindAssigneeSearch("edit");
+                                            }
 
                                             $('#editEventModalActivities').modal('show');
 
@@ -1057,6 +1059,13 @@
                                                         dataType: "json",
                                                         success: function (resp) {
                                                             const activityId = resp?.id || data.id;
+
+                                                            if (!data.can_manage) {
+                                                                $('#editEventModalActivities').modal('hide');
+                                                                activitiesCalendar.refetchEvents();
+                                                                showToast(resp?.message || "Activity updated", "success");
+                                                                return;
+                                                            }
 
                                                             setActivityAssignees(activityId)
                                                                 .done(function(){

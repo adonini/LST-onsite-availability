@@ -1,9 +1,10 @@
 from datetime import date, datetime
+import json
 
 from django.core import mail
 from django.contrib.auth.models import User
 from django.contrib.auth.models import Group
-from django.test import TestCase
+from django.test import Client, TestCase
 from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -229,6 +230,101 @@ class ActivityCalendarSerializationTests(TestCase):
             "color": "#2E7D32",
             "classNames": ["activity-event"],
         }])
+
+
+class CalendarWriteSecurityTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(username="activity_owner", password="password")
+        self.other = User.objects.create_user(username="activity_other", password="password")
+        self.staff = User.objects.create_user(username="activity_staff", password="password", is_staff=True)
+        self.activity = Activity.objects.create(
+            name_activity="Test activity",
+            start=timezone.make_aware(datetime(2026, 10, 26, 10)),
+            end=timezone.make_aware(datetime(2026, 10, 26, 12)),
+            status="OG", telescope="LST1", created_by=self.owner,
+        )
+
+    def test_all_calendar_write_routes_require_csrf(self):
+        client = Client(enforce_csrf_checks=True)
+        client.force_login(self.owner)
+        requests = (
+            (reverse("add_event"), {}),
+            (reverse("remove_event"), {"id": 1}),
+            (reverse("add_activity"), {}),
+            (reverse("remove_activity"), {"id": self.activity.pk}),
+        )
+        for url, payload in requests:
+            with self.subTest(url=url):
+                self.assertEqual(client.post(url, payload).status_code, 403)
+        self.assertEqual(client.post(
+            reverse("set_activity_assignees", args=[self.activity.pk]),
+            data=json.dumps({"user_ids": [self.other.pk]}), content_type="application/json",
+        ).status_code, 403)
+        self.assertTrue(Activity.objects.filter(pk=self.activity.pk).exists())
+
+    def test_only_creator_or_staff_can_change_assignees(self):
+        url = reverse("set_activity_assignees", args=[self.activity.pk])
+        payload = json.dumps({"user_ids": [self.other.pk]})
+        self.client.force_login(self.other)
+        self.assertEqual(self.client.post(url, payload, content_type="application/json").status_code, 403)
+        self.assertFalse(self.activity.assignees.exists())
+
+        for authorized_user in (self.owner, self.staff):
+            with self.subTest(user=authorized_user.username):
+                self.client.force_login(authorized_user)
+                self.assertEqual(self.client.post(url, payload, content_type="application/json").status_code, 200)
+                self.assertEqual(list(self.activity.assignees.all()), [self.other])
+
+    def test_activity_details_exposes_manage_permission_for_the_buttons(self):
+        url = reverse("activity_details", args=[self.activity.pk])
+        self.assertFalse(self.client.get(url).json()["can_manage"])
+        for user, expected in ((self.other, False), (self.owner, True), (self.staff, True)):
+            with self.subTest(user=user.username):
+                self.client.force_login(user)
+                self.assertEqual(self.client.get(url).json()["can_manage"], expected)
+
+    def test_authenticated_non_creator_can_edit_activity_without_changing_assignees(self):
+        self.activity.assignees.add(self.owner)
+        self.client.force_login(self.other)
+        response = self.client.post(reverse("add_activity"), {
+            "id": self.activity.pk,
+            "name_activity": "Edited by another user",
+            "start": "2026-10-26",
+            "end": "2026-10-27",
+            "status": "OH",
+            "telescope": "LST2",
+            "comments": "Updated comment",
+            "description": "Updated description",
+        })
+        self.assertEqual(response.status_code, 200)
+        self.activity.refresh_from_db()
+        self.assertEqual(self.activity.name_activity, "Edited by another user")
+        self.assertEqual(list(self.activity.assignees.all()), [self.owner])
+        self.assertEqual(self.client.post(
+            reverse("set_activity_assignees", args=[self.activity.pk]),
+            json.dumps({"user_ids": [self.other.pk]}),
+            content_type="application/json",
+        ).status_code, 403)
+
+    def test_only_creator_or_staff_can_delete_activity(self):
+        url = reverse("remove_activity")
+        self.client.force_login(self.other)
+        self.assertEqual(self.client.post(url, {"id": self.activity.pk}).status_code, 403)
+        self.assertTrue(Activity.objects.filter(pk=self.activity.pk).exists())
+
+        self.client.force_login(self.owner)
+        self.assertEqual(self.client.post(url, {"id": self.activity.pk}).status_code, 200)
+        self.assertFalse(Activity.objects.filter(pk=self.activity.pk).exists())
+
+        staff_activity = Activity.objects.create(
+            name_activity="Staff deletion",
+            start=timezone.make_aware(datetime(2026, 10, 27, 10)),
+            end=timezone.make_aware(datetime(2026, 10, 27, 12)),
+            status="OG", telescope="LST1", created_by=self.owner,
+        )
+        self.client.force_login(self.staff)
+        self.assertEqual(self.client.post(url, {"id": staff_activity.pk}).status_code, 200)
+        self.assertFalse(Activity.objects.filter(pk=staff_activity.pk).exists())
 
 
 class OrmStaffEmailTests(TestCase):
