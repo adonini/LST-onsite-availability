@@ -33,7 +33,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '161.72.87.51']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '161.72.87.51', '192.168.0.19']
 CSRF_TRUSTED_ORIGINS = [
     "https://calendar.lst.iac.es",
     "https://calendar.lst1.iac.es",

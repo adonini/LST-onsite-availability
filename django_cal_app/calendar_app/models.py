@@ -58,6 +58,28 @@ class ActivityAssignment(models.Model):
         unique_together = ("activity", "user")
 
 
+class UserContact(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="contact")
+    phone = models.CharField(max_length=32, blank=True)
+
+    def __str__(self):
+        return str(self.user)
+
+
+class OnCallAssignment(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="on_call_assignments")
+    start = models.DateTimeField()
+    end = models.DateTimeField()  # Exclusive for full-day assignments.
+    all_day = models.BooleanField(default=False)
+    assigned_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="on_call_assignments_made")
+
+    class Meta:
+        ordering = ["start", "id"]
+
+    def __str__(self):
+        return f"{self.user} ({self.start} - {self.end})"
+
+
 class MagicSecondFloorRequest(models.Model):
     PENDING = "pending"
     APPROVED = "approved"

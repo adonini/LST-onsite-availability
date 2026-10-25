@@ -11,3 +11,244 @@
 .fc-event-title{
     text-align: center;
 }
+
+.navbar-action-add {
+    margin-right: auto;
+}
+
+.navbar-action-profile,
+.navbar-action-login {
+    margin-left: auto;
+}
+
+.navbar-action-logout {
+    margin-left: 0.75rem;
+}
+
+@media (max-width: 991.98px) {
+    .navbar .container-fluid {
+        position: relative;
+        align-items: flex-start;
+    }
+
+    .navbar .navbar-brand {
+        top: 12px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        width: calc(100% - 120px);
+        margin: 0;
+        white-space: normal;
+    }
+
+    .navbar .navbar-brand h1 {
+        margin: 0;
+        font-size: clamp(1.15rem, 5vw, 1.35rem);
+        line-height: 1.25;
+        letter-spacing: 0.035em;
+    }
+
+    .navbar .navbar-toggler {
+        margin-top: 8px;
+        margin-bottom: 30px;
+        padding: 0.25rem 0.35rem;
+    }
+
+    .navbar .navbar-toggler-icon {
+        width: 1.1em;
+        height: 1.1em;
+    }
+
+    .navbar .navbar-collapse {
+        flex-basis: 100%;
+        width: 100%;
+        padding: 0 0.25rem 0.5rem;
+    }
+
+    .navbar .navbar-collapse:not(.show):not(.collapsing) {
+        display: none !important;
+    }
+
+    .navbar .navbar-collapse.show,
+    .navbar .navbar-collapse.collapsing {
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.25rem;
+        align-items: center;
+    }
+
+    .navbar .navbar-collapse.collapsing {
+        transition: none !important;
+    }
+
+    .navbar .navbar-action,
+    .navbar .navbar-action .nav-link {
+        margin: 0;
+        min-width: 0;
+        min-height: 44px;
+        padding: 0.45rem 0.25rem;
+        font-size: 0.72rem;
+        line-height: 1.25;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: #fff !important;
+    }
+
+    .navbar .navbar-action {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .navbar .navbar-action-add {
+        grid-column: 1;
+    }
+
+    .navbar .navbar-action-profile,
+    .navbar .navbar-action-login {
+        grid-column: 2;
+    }
+
+    .navbar .navbar-action-logout {
+        grid-column: 3;
+        padding: 0;
+    }
+
+    .navbar .navbar-action-logout .nav-link {
+        width: 100%;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .contenSelector {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem !important;
+        overflow: visible;
+        padding: 0.25rem 0;
+    }
+
+    .contenSelector > * {
+        display: flex !important;
+        align-items: center;
+        width: 100%;
+        min-width: 0;
+        min-height: 48px;
+        padding: 0.5rem 0.7rem;
+        font-size: 0.7rem;
+        line-height: 1.2;
+        white-space: normal;
+        text-align: center;
+        justify-content: center;
+        border-radius: 0.375rem !important;
+    }
+
+    .contenSelector .buttonText {
+        margin: 0;
+        font-size: inherit;
+        white-space: normal;
+    }
+
+    .on-call-actions .btn {
+        width: 100%;
+        min-height: 44px;
+    }
+
+    .magic-actions-inner {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr);
+        width: 100%;
+    }
+
+    .magic-actions-inner.has-pending {
+        grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
+    }
+
+    .magic-actions-inner .btn {
+        width: 100%;
+        min-width: 0;
+        min-height: 44px;
+        padding: 0.5rem 0.35rem;
+        white-space: normal;
+        text-align: center;
+        font-size: 0.7rem;
+    }
+
+    #calendar, #magic-calendar, #on-call-calendar {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .fc .fc-header-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.4rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .fc .fc-header-toolbar .fc-toolbar-chunk:nth-child(2) {
+        order: -1;
+        width: 100%;
+        text-align: center;
+    }
+
+    .fc .fc-toolbar-title {
+        font-size: 1.05rem;
+        line-height: 1.25;
+        letter-spacing: 0.02em;
+    }
+
+    .fc .fc-button {
+        padding: 0.25rem 0.4rem;
+        font-size: 0.72rem;
+        line-height: 1.25;
+    }
+
+    .fc .fc-daygrid-day-number,
+    .fc .fc-col-header-cell-cushion {
+        padding: 0.15rem;
+        font-size: 0.7rem;
+    }
+
+    .fc .fc-daygrid-event {
+        margin: 1px 0;
+        font-size: 0.68rem;
+    }
+
+    .fc .fc-daygrid-event .fc-event-title,
+    .activity-event .fc-event-title {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap !important;
+    }
+
+    .fc .fc-daygrid-day-frame {
+        min-height: 4.4rem;
+    }
+
+    .fc .fc-daygrid-day-bg .fc-bg-event {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+        padding: 1rem 0.1rem 0.1rem;
+        overflow: hidden;
+    }
+
+    .fc .fc-daygrid-day-bg .fc-bg-event .fc-event-title {
+        box-sizing: border-box;
+        display: block;
+        width: 100%;
+        max-height: 100%;
+        padding: 0;
+        margin: 0;
+        overflow: hidden;
+        overflow-wrap: anywhere;
+        white-space: normal;
+        font-size: 0.55rem;
+        line-height: 1.15;
+        text-align: center !important;
+    }
+}

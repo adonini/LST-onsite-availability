@@ -3,6 +3,13 @@ from . import views
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
+    path('my-profile/', views.my_profile, name='my_profile'),
+    path('on-call/', views.on_call_calendar, name='on_call_calendar'),
+    path('on-call/events/', views.on_call_events, name='on_call_events'),
+    path('on-call/assignment/', views.create_on_call_assignment, name='create_on_call_assignment'),
+    path('on-call/assignment/<int:assignment_id>/', views.on_call_details, name='on_call_details'),
+    path('on-call/assignment/<int:assignment_id>/update/', views.update_on_call_assignment, name='update_on_call_assignment'),
+    path('on-call/assignment/<int:assignment_id>/delete/', views.delete_on_call_assignment, name='delete_on_call_assignment'),
     path('', views.calendar_view, name='calendar'),
     path('login/', views.CustomLoginView.as_view(template_name='login.html'), name='login'),
     path('logout/', views.logout_user, name='logout'),

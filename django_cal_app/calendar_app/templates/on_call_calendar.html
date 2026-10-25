@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}On-call personnel{% endblock %}
+{% block content %}
+<div class="contenSelector w-100 d-flex flex-wrap justify-content-center gap-3 mt-1 mb-3">
+  <a class="availability btn btn-light text-decoration-none" href="{% url 'calendar' %}">Availability</a>
+  <a class="activities btn btn-light text-decoration-none" href="{% url 'calendar' %}#activities">Activities</a>
+  <a class="magic-floor btn btn-light text-decoration-none" href="{% url 'magic_second_floor' %}">Magic 2nd Floor Usage</a>
+  <span class="on-call btn btn-info pe-none">On-call personnel</span>
+</div>
+{% if user.is_staff %}
+<div class="on-call-actions d-flex justify-content-end mb-3">
+  <button class="btn btn-success rounded" data-bs-toggle="modal" data-bs-target="#assignOnCallModal">Assign person</button>
+</div>
+{% endif %}
+<div id="on-call-calendar"></div>
+
+<div class="modal fade" id="onCallDetailsModal" tabindex="-1" aria-labelledby="onCallDetailsTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+    <div class="modal-header"><h3 class="modal-title h5" id="onCallDetailsTitle">On-call contact</h3><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+    <div class="modal-body"><dl class="row mb-0">
+      <dt class="col-sm-4">Person</dt><dd class="col-sm-8" id="on-call-name"></dd>
+      <dt class="col-sm-4">Start</dt><dd class="col-sm-8" id="on-call-start"></dd>
+      <dt class="col-sm-4">End</dt><dd class="col-sm-8" id="on-call-end"></dd>
+      <dt class="col-sm-4">Phone</dt><dd class="col-sm-8"><a id="on-call-phone"></a></dd>
+      <dt class="col-sm-4">Email</dt><dd class="col-sm-8"><a id="on-call-email"></a></dd>
+    </dl><div id="on-call-details-error" class="text-danger" role="alert"></div></div>
+    {% if user.is_staff %}<div class="modal-footer">
+      <button type="button" class="btn btn-outline-primary" id="editOnCallButton">Edit dates</button>
+      <button type="button" class="btn btn-outline-danger" id="deleteOnCallButton">Delete assignment</button>
+    </div>{% endif %}
+  </div></div>
+</div>
+{% if user.is_staff %}
+<div class="modal fade" id="assignOnCallModal" tabindex="-1" aria-labelledby="assignOnCallTitle" aria-hidden="true">
+  <div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><h3 class="modal-title h5" id="assignOnCallTitle">Assign on-call person</h3><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+    <form id="assignOnCallForm" method="post" action="{% url 'create_on_call_assignment' %}">
+      {% csrf_token %}<div class="modal-body">
+        <div id="on-call-form-errors" class="text-danger" role="alert"></div>
+        <div class="mb-3" id="on-call-person-field"><label class="form-label" for="id_user">Person</label><select class="form-select" id="id_user" name="user" required><option value="">Select a person</option>{% for person in form.fields.user.queryset %}<option value="{{ person.pk }}">{{ person.get_full_name|default:person.username }}</option>{% endfor %}</select></div>
+        <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="id_all_day" name="all_day" checked><label class="form-check-label" for="id_all_day">Full days</label></div>
+        <div class="mb-3"><label class="form-label" for="id_start_date">Start date</label><input class="form-control" type="date" id="id_start_date" name="start_date" required></div>
+        <div class="mb-3 time-field"><label class="form-label" for="id_start_time">Start time</label><input class="form-control" type="time" id="id_start_time" name="start_time" required></div>
+        <div class="mb-3"><label class="form-label" for="id_end_date">End date</label><input class="form-control" type="date" id="id_end_date" name="end_date" required></div>
+        <div class="mb-3 time-field"><label class="form-label" for="id_end_time">End time</label><input class="form-control" type="time" id="id_end_time" name="end_time" required></div>
+      </div><div class="modal-footer"><button class="btn btn-success" type="submit" id="on-call-form-submit">Assign</button></div>
+    </form>
+  </div></div>
+</div>
+{% endif %}
+{% endblock %}
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const element = document.getElementById('on-call-calendar');
+  if (!element) return;
+  let selectedAssignment = null;
+  const detailsModalElement = document.getElementById('onCallDetailsModal');
+  const calendar = new FullCalendar.Calendar(element, {
+    initialView: 'dayGridMonth', firstDay: 1,
+    headerToolbar: { start: 'dayGridMonth,timeGridWeek', center: 'title', end: 'prev,today,next' },
+    eventSources: [{ url: '{% url "on_call_events" %}' }, { url: '{% static "holidays/2026_holidays.json" %}', display: 'background' }],
+    eventClick: async function (info) {
+      const response = await fetch('{% url "on_call_calendar" %}assignment/' + info.event.id + '/');
+      if (!response.ok) return;
+      const data = await response.json();
+      selectedAssignment = { id: info.event.id, ...data };
+      document.getElementById('on-call-details-error').textContent = '';
+      document.getElementById('on-call-name').textContent = data.name;
+      document.getElementById('on-call-start').textContent = data.all_day ? new Date(data.start).toLocaleDateString() : new Date(data.start).toLocaleString();
+      const end = new Date(data.end);
+      if (data.all_day) end.setDate(end.getDate() - 1);
+      document.getElementById('on-call-end').textContent = data.all_day ? end.toLocaleDateString() : end.toLocaleString();
+      const phone = document.getElementById('on-call-phone');
+      phone.textContent = data.phone || 'Not provided';
+      phone.href = data.phone ? 'tel:' + data.phone.replace(/[^+0-9]/g, '') : '#';
+      const email = document.getElementById('on-call-email');
+      email.textContent = data.email || 'Not provided';
+      email.href = data.email ? 'mailto:' + data.email : '#';
+      bootstrap.Modal.getOrCreateInstance(detailsModalElement).show();
+    }
+  });
+  calendar.render();
+  const form = document.getElementById('assignOnCallForm');
+  if (form) {
+    const createUrl = form.action;
+    const assignmentModalElement = document.getElementById('assignOnCallModal');
+    const personField = document.getElementById('on-call-person-field');
+    const personSelect = document.getElementById('id_user');
+    const allDay = document.getElementById('id_all_day');
+    const toggle = () => document.querySelectorAll('.time-field').forEach(field => { field.hidden = allDay.checked; field.querySelector('input').required = !allDay.checked; });
+    allDay.addEventListener('change', toggle); toggle();
+    assignmentModalElement.addEventListener('hidden.bs.modal', () => {
+      form.reset();
+      form.action = createUrl;
+      personField.hidden = false;
+      personSelect.disabled = false;
+      personSelect.required = true;
+      document.getElementById('assignOnCallTitle').textContent = 'Assign on-call person';
+      document.getElementById('on-call-form-submit').textContent = 'Assign';
+      document.getElementById('on-call-form-errors').textContent = '';
+      toggle();
+    });
+    document.getElementById('editOnCallButton').addEventListener('click', () => {
+      if (!selectedAssignment) return;
+      const data = selectedAssignment;
+      form.action = createUrl + data.id + '/update/';
+      personField.hidden = true;
+      personSelect.disabled = true;
+      personSelect.required = false;
+      allDay.checked = data.all_day;
+      document.getElementById('id_start_date').value = data.start.slice(0, 10);
+      const endDate = new Date(data.end);
+      if (data.all_day) endDate.setUTCDate(endDate.getUTCDate() - 1);
+      document.getElementById('id_end_date').value = endDate.toISOString().slice(0, 10);
+      document.getElementById('id_start_time').value = data.all_day ? '' : data.start.slice(11, 16);
+      document.getElementById('id_end_time').value = data.all_day ? '' : data.end.slice(11, 16);
+      document.getElementById('assignOnCallTitle').textContent = 'Edit on-call dates';
+      document.getElementById('on-call-form-submit').textContent = 'Save dates';
+      toggle();
+      detailsModalElement.addEventListener('hidden.bs.modal', () => {
+        bootstrap.Modal.getOrCreateInstance(assignmentModalElement).show();
+      }, { once: true });
+      bootstrap.Modal.getInstance(detailsModalElement).hide();
+    });
+    document.getElementById('deleteOnCallButton').addEventListener('click', async () => {
+      if (!selectedAssignment || !window.confirm('Delete this on-call assignment?')) return;
+      const response = await fetch(createUrl + selectedAssignment.id + '/delete/', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value }
+      });
+      if (!response.ok) {
+        document.getElementById('on-call-details-error').textContent = 'Could not delete this assignment. Please try again.';
+        return;
+      }
+      selectedAssignment = null;
+      bootstrap.Modal.getInstance(detailsModalElement).hide();
+      calendar.refetchEvents();
+    });
+    form.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      const response = await fetch(form.action, { method: 'POST', body: new FormData(form) });
+      if (response.ok) { bootstrap.Modal.getInstance(assignmentModalElement).hide(); calendar.refetchEvents(); return; }
+      const data = await response.json();
+      document.getElementById('on-call-form-errors').textContent = Object.values(data.errors || {}).flat().map(error => error.message).join(' ');
+    });
+  }
+});
+</script>
+{% endblock %}

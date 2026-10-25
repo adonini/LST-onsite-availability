@@ -2,6 +2,7 @@ from datetime import date, datetime
 
 from django.core import mail
 from django.contrib.auth.models import User
+from django.contrib.auth.models import Group
 from django.test import TestCase
 from django.test import override_settings
 from django.urls import reverse
@@ -9,7 +10,179 @@ from django.utils import timezone
 
 from calendar_app.management.commands.send_orm_staff_email import send_email
 
-from .models import Activity, Availability, MagicSecondFloorRequest, Places
+from .models import Activity, Availability, MagicSecondFloorRequest, Places, OnCallAssignment, UserContact
+
+
+class UserAdminPhoneTests(TestCase):
+    def setUp(self):
+        self.admin_user = User.objects.create_superuser(
+            username="admin_phone_test", password="test-password", email="admin@example.test"
+        )
+        self.client.force_login(self.admin_user)
+
+    def test_change_user_shows_phone_below_email_and_saves_it(self):
+        person = User.objects.create_user(username="phone_user", email="before@example.test")
+        change_url = reverse("admin:auth_user_change", args=[person.pk])
+        page = self.client.get(change_url)
+        self.assertEqual(page.status_code, 200)
+        self.assertLess(page.content.index(b'name="email"'), page.content.index(b'name="phone"'))
+
+        response = self.client.post(change_url, {
+            "username": person.username, "email": "after@example.test", "phone": "+34 600 123 456",
+            "date_joined_0": person.date_joined.strftime("%Y-%m-%d"),
+            "date_joined_1": person.date_joined.strftime("%H:%M:%S"),
+            "is_active": "on", "_save": "Save",
+        })
+        self.assertEqual(response.status_code, 302, response.context["adminform"].form.errors if response.status_code == 200 else "")
+        person.refresh_from_db()
+        self.assertEqual(person.email, "after@example.test")
+        self.assertEqual(person.contact.phone, "+34 600 123 456")
+        self.assertContains(self.client.get(change_url), 'value="+34 600 123 456"')
+
+        response = self.client.post(change_url, {
+            "username": person.username, "email": person.email, "phone": "invalid!",
+            "date_joined_0": person.date_joined.strftime("%Y-%m-%d"),
+            "date_joined_1": person.date_joined.strftime("%H:%M:%S"),
+            "is_active": "on", "_save": "Save",
+        })
+        self.assertEqual(response.status_code, 200)
+        person.contact.refresh_from_db()
+        self.assertEqual(person.contact.phone, "+34 600 123 456")
+
+        response = self.client.post(change_url, {
+            "username": person.username, "email": person.email, "phone": "",
+            "date_joined_0": person.date_joined.strftime("%Y-%m-%d"),
+            "date_joined_1": person.date_joined.strftime("%H:%M:%S"),
+            "is_active": "on", "_save": "Save",
+        })
+        self.assertEqual(response.status_code, 302)
+        person.contact.refresh_from_db()
+        self.assertEqual(person.contact.phone, "")
+
+    def test_add_user_shows_phone_below_email_and_saves_it(self):
+        add_url = reverse("admin:auth_user_add")
+        page = self.client.get(add_url)
+        self.assertEqual(page.status_code, 200)
+        self.assertLess(page.content.index(b'name="email"'), page.content.index(b'name="phone"'))
+
+        response = self.client.post(add_url, {
+            "username": "new_phone_user", "email": "new@example.test", "phone": "+34 611 222 333",
+            "password1": "test-password-123!", "password2": "test-password-123!", "_save": "Save",
+        })
+        self.assertEqual(response.status_code, 302)
+        person = User.objects.get(username="new_phone_user")
+        self.assertEqual(person.email, "new@example.test")
+        self.assertEqual(person.contact.phone, "+34 611 222 333")
+
+
+class OnCallTests(TestCase):
+    def setUp(self):
+        self.staff = User.objects.create_user(username="staff_on_call", password="pass", is_staff=True)
+        self.person = User.objects.create_user(username="on_call", password="pass", email="oncall@example.test")
+        self.other = User.objects.create_user(username="other", password="pass", email="other@example.test")
+        group, _ = Group.objects.get_or_create(name="On-call personnel")
+        self.person.groups.add(group)
+        UserContact.objects.create(user=self.person, phone="+34 600 000 000")
+
+    def test_profile_updates_current_user_contact(self):
+        self.client.force_login(self.person)
+        response = self.client.post(reverse("my_profile"), {
+            "first_name": "Ada", "last_name": "Test", "email": "ada@example.test", "phone": "+34 611 111 111",
+        })
+        self.assertRedirects(response, reverse("my_profile"))
+        self.person.refresh_from_db()
+        self.assertEqual(self.person.email, "ada@example.test")
+        self.assertEqual(self.person.contact.phone, "+34 611 111 111")
+        self.assertFalse(UserContact.objects.filter(user=self.other).exists())
+
+    def test_only_staff_can_assign_group_members_with_contact_details(self):
+        payload = {"user": self.person.pk, "all_day": "on", "start_date": "2026-10-26", "end_date": "2026-10-28"}
+        self.client.force_login(self.person)
+        self.assertNotEqual(self.client.post(reverse("create_on_call_assignment"), payload).status_code, 201)
+        self.client.force_login(self.staff)
+        self.assertEqual(self.client.post(reverse("create_on_call_assignment"), {**payload, "user": self.other.pk}).status_code, 400)
+        self.assertEqual(self.client.post(reverse("create_on_call_assignment"), payload).status_code, 201)
+        assignment = OnCallAssignment.objects.get()
+        self.assertEqual(assignment.end.date().isoformat(), "2026-10-29")
+
+        self.client.logout()
+        self.assertEqual(self.client.get(reverse("on_call_calendar")).status_code, 200)
+        self.assertEqual(len(self.client.get(reverse("on_call_events")).json()), 1)
+        details = self.client.get(reverse("on_call_details", args=[assignment.pk])).json()
+        self.assertEqual(details["phone"], "+34 600 000 000")
+        self.assertEqual(details["email"], "oncall@example.test")
+
+    def test_timed_assignment_requires_valid_times(self):
+        self.client.force_login(self.staff)
+        payload = {"user": self.person.pk, "start_date": "2026-10-26", "end_date": "2026-10-26", "start_time": "18:00", "end_time": "09:00"}
+        self.assertEqual(self.client.post(reverse("create_on_call_assignment"), payload).status_code, 400)
+        payload["end_time"] = "22:00"
+        self.assertEqual(self.client.post(reverse("create_on_call_assignment"), payload).status_code, 201)
+        self.assertFalse(OnCallAssignment.objects.get().all_day)
+
+    def test_staff_can_edit_only_assignment_dates(self):
+        assignment = OnCallAssignment.objects.create(
+            user=self.person,
+            start=timezone.make_aware(datetime(2026, 10, 26)),
+            end=timezone.make_aware(datetime(2026, 10, 29)),
+            all_day=True,
+            assigned_by=self.staff,
+        )
+        url = reverse("update_on_call_assignment", args=[assignment.pk])
+        self.client.force_login(self.staff)
+        self.assertEqual(self.client.get(url).status_code, 405)
+        self.assertEqual(self.client.post(url, {
+            "start_date": "2026-10-28", "end_date": "2026-10-28",
+            "start_time": "18:00", "end_time": "09:00",
+        }).status_code, 400)
+        assignment.refresh_from_db()
+        self.assertEqual(assignment.start.date().isoformat(), "2026-10-26")
+
+        self.assertEqual(self.client.post(url, {
+            "start_date": "2026-10-28", "end_date": "2026-10-28",
+            "start_time": "18:00", "end_time": "22:00", "user": self.other.pk,
+        }).status_code, 200)
+        assignment.refresh_from_db()
+        self.assertEqual(assignment.user, self.person)
+        self.assertFalse(assignment.all_day)
+        self.assertEqual(assignment.start.hour, 18)
+        self.assertEqual(assignment.end.hour, 22)
+
+        self.assertEqual(self.client.post(url, {
+            "all_day": "on", "start_date": "2026-11-02", "end_date": "2026-11-04",
+        }).status_code, 200)
+        assignment.refresh_from_db()
+        self.assertTrue(assignment.all_day)
+        self.assertEqual(assignment.start.date().isoformat(), "2026-11-02")
+        self.assertEqual(assignment.end.date().isoformat(), "2026-11-05")
+
+    def test_only_staff_can_edit_or_delete_assignments(self):
+        assignment = OnCallAssignment.objects.create(
+            user=self.person,
+            start=timezone.make_aware(datetime(2026, 10, 26)),
+            end=timezone.make_aware(datetime(2026, 10, 27)),
+            all_day=True,
+            assigned_by=self.staff,
+        )
+        update_url = reverse("update_on_call_assignment", args=[assignment.pk])
+        delete_url = reverse("delete_on_call_assignment", args=[assignment.pk])
+        payload = {"all_day": "on", "start_date": "2026-11-02", "end_date": "2026-11-04"}
+        self.client.force_login(self.person)
+        self.assertNotEqual(self.client.post(update_url, payload).status_code, 200)
+        self.assertNotEqual(self.client.post(delete_url).status_code, 200)
+        self.assertTrue(OnCallAssignment.objects.filter(pk=assignment.pk).exists())
+
+        self.client.force_login(self.staff)
+        self.assertEqual(self.client.get(delete_url).status_code, 405)
+        self.assertEqual(self.client.post(delete_url).status_code, 200)
+        self.assertFalse(OnCallAssignment.objects.filter(pk=assignment.pk).exists())
+
+    def test_edit_and_delete_controls_are_staff_only(self):
+        self.assertNotContains(self.client.get(reverse("on_call_calendar")), 'id="editOnCallButton"')
+        self.assertNotContains(self.client.get(reverse("on_call_calendar")), 'id="deleteOnCallButton"')
+        self.client.force_login(self.staff)
+        self.assertContains(self.client.get(reverse("on_call_calendar")), 'id="editOnCallButton"')
+        self.assertContains(self.client.get(reverse("on_call_calendar")), 'id="deleteOnCallButton"')
 
 
 class ActivityCalendarSerializationTests(TestCase):

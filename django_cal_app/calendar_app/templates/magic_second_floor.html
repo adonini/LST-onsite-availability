@@ -42,11 +42,14 @@
     <div class="magic-floor btn btn-info pe-none d-flex align-items-center rounded">
         <p class="buttonText mb-0">Magic 2nd Floor Usage</p>
     </div>
+    <a class="on-call btn btn-light d-flex align-items-center rounded text-decoration-none" href="{% url 'on_call_calendar' %}">
+        <p class="buttonText mb-0">On-call personnel</p>
+    </a>
 </div>
 
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
-    <h2 class="h4 mb-0">Magic 2nd Floor Usage</h2>
-    <div class="d-flex gap-2">
+{% if user.is_authenticated %}
+<div class="magic-actions d-flex justify-content-end mb-3">
+    <div class="magic-actions-inner d-flex gap-2 {% if user.is_staff %}has-pending{% endif %}">
         {% if user.is_staff %}
             <a href="{% url 'magic_second_floor_pending' %}" class="btn btn-warning rounded">
                 Pending requests
@@ -60,6 +63,7 @@
         {% endif %}
     </div>
 </div>
+{% endif %}
 
 <div id="magic-calendar"></div>
 

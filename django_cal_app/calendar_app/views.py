@@ -4,8 +4,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 import logging
-from .models import Availability, Places, Activity, ActivityAssignment, MagicSecondFloorRequest
-from .forms import MagicSecondFloorRequestForm, MagicSecondFloorRejectForm
+from .models import Availability, Places, Activity, ActivityAssignment, MagicSecondFloorRequest, OnCallAssignment, UserContact
+from .forms import MagicSecondFloorRequestForm, MagicSecondFloorRejectForm, ContactForm, OnCallAssignmentForm, OnCallDatesForm
 from django.contrib import messages
 from datetime import datetime, timedelta
 from django.contrib.auth import logout, get_user_model, login
@@ -31,6 +31,96 @@ from django.utils import timezone
 
 # Get an instance of a logger
 logger = logging.getLogger('calendar_app')
+
+
+@login_required
+def my_profile(request):
+    contact, _ = UserContact.objects.get_or_create(user=request.user)
+    if request.method == "POST":
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            for field in ("first_name", "last_name", "email"):
+                setattr(request.user, field, form.cleaned_data[field])
+            request.user.save(update_fields=["first_name", "last_name", "email"])
+            contact.phone = form.cleaned_data["phone"]
+            contact.save(update_fields=["phone"])
+            messages.success(request, "Contact details updated.")
+            return redirect("my_profile")
+    else:
+        form = ContactForm(initial={
+            "first_name": request.user.first_name,
+            "last_name": request.user.last_name,
+            "email": request.user.email,
+            "phone": contact.phone,
+        })
+    return render(request, "my_profile.html", {"form": form})
+
+
+def on_call_calendar(request):
+    form = OnCallAssignmentForm() if request.user.is_authenticated and request.user.is_staff else None
+    return render(request, "on_call_calendar.html", {"form": form})
+
+
+def on_call_events(request):
+    events = OnCallAssignment.objects.select_related("user")
+    return JsonResponse([{
+        "id": assignment.pk,
+        "title": assignment.user.get_full_name() or assignment.user.username,
+        "start": assignment.start.isoformat(),
+        "end": assignment.end.isoformat(),
+        "allDay": assignment.all_day,
+    } for assignment in events], safe=False)
+
+
+def on_call_details(request, assignment_id):
+    assignment = get_object_or_404(OnCallAssignment.objects.select_related("user", "user__contact"), pk=assignment_id)
+    contact = getattr(assignment.user, "contact", None)
+    return JsonResponse({
+        "name": assignment.user.get_full_name() or assignment.user.username,
+        "start": assignment.start.isoformat(),
+        "end": assignment.end.isoformat(),
+        "all_day": assignment.all_day,
+        "email": assignment.user.email,
+        "phone": contact.phone if contact else "",
+    })
+
+
+@staff_member_required
+@require_POST
+def create_on_call_assignment(request):
+    form = OnCallAssignmentForm(request.POST)
+    if not form.is_valid():
+        return JsonResponse({"errors": form.errors.get_json_data()}, status=400)
+    assignment = OnCallAssignment.objects.create(
+        user=form.cleaned_data["user"],
+        start=form.cleaned_data["start_datetime"],
+        end=form.cleaned_data["end_datetime"],
+        all_day=form.cleaned_data["all_day"],
+        assigned_by=request.user,
+    )
+    return JsonResponse({"id": assignment.pk}, status=201)
+
+
+@staff_member_required
+@require_POST
+def update_on_call_assignment(request, assignment_id):
+    assignment = get_object_or_404(OnCallAssignment, pk=assignment_id)
+    form = OnCallDatesForm(request.POST)
+    if not form.is_valid():
+        return JsonResponse({"errors": form.errors.get_json_data()}, status=400)
+    assignment.start = form.cleaned_data["start_datetime"]
+    assignment.end = form.cleaned_data["end_datetime"]
+    assignment.all_day = form.cleaned_data["all_day"]
+    assignment.save(update_fields=["start", "end", "all_day"])
+    return JsonResponse({"id": assignment.pk})
+
+
+@staff_member_required
+@require_POST
+def delete_on_call_assignment(request, assignment_id):
+    assignment = get_object_or_404(OnCallAssignment, pk=assignment_id)
+    assignment.delete()
+    return JsonResponse({"id": assignment_id})
 
 
 def _is_lst_user(user):
