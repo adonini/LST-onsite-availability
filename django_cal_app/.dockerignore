@@ -1,7 +1,10 @@
 .env
 .env.*
-*.sqlite3
+*.sqlite3*
+**/*.sqlite3*
 db_data/
+db_data_prod/
+prod-smoke-data/
 logs/
 staticfiles/
 __pycache__/

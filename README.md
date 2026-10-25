@@ -16,14 +16,18 @@ On the production host, provide:
 | Item | Where it is mounted | Purpose |
 | --- | --- | --- |
 | `django_cal_app/.env.prod` | Loaded by Compose, not copied into the image | Django secret, hostnames, HTTPS and SMTP settings |
-| `/home/lst1/lst-onsite-availability/db_data/db.sqlite3` | `/data/db.sqlite3` in `app` | Persistent SQLite database |
+| `/home/lst1/lst-onsite-availability/db_data_prod/db.sqlite3` | `/data/db.sqlite3` in `app` | Persistent SQLite database |
 | `/home/www/git/lst.iac.es/website/public/travel/lst1_events.json` | `/data/onsite/lst1_events.json` (read-only) | External onsite events |
 
 The database directory must already exist and be writable by the app container.
-If migrating an existing deployment, verify the database file at this path is
-the one currently in use **before** starting the new stack. Back it up using
-SQLite's online backup mechanism and test a restore. Never put the production
-database, `.env.prod`, or copied event data in Git.
+When migrating the existing deployment, first verify the database path used by
+the running Django process. The legacy Compose file mounted a different path
+from Django's default `/code/db.sqlite3`; the old `db_data/db.sqlite3` path may
+even be a directory, not the live database file. Back up the live database
+using SQLite's online backup mechanism, verify the backup, and put a final
+copy in `db_data_prod/db.sqlite3` after stopping the old application. Keep the
+original database and test a restore. Never put the production database,
+`.env.prod`, or copied event data in Git or the Docker image.
 
 Copy `django_cal_app/production.env.example` to `django_cal_app/.env.prod` and
 replace the placeholder secret with a long, random `DJANGO_SECRET_KEY`. The
