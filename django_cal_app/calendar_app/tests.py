@@ -443,6 +443,22 @@ class MagicSecondFloorRequestTests(TestCase):
         self.assertEqual(response.json()[0]["id"], request_obj.id)
         self.assertEqual(response.json()[0]["title"], "Ada Lovelace - Camera work")
 
+    def test_magic_calendar_uses_utc_for_single_day_reservations(self):
+        request_obj = self._create_magic_request(status=MagicSecondFloorRequest.APPROVED)
+        request_obj.start = timezone.make_aware(datetime(2026, 10, 12, 9, 0))
+        request_obj.end = timezone.make_aware(datetime(2026, 10, 12, 23, 59))
+        request_obj.save(update_fields=["start", "end"])
+
+        page = self.client.get(reverse("magic_second_floor"))
+        event = self.client.get(reverse("magic_second_floor_events")).json()[0]
+        details = self.client.get(reverse("magic_second_floor_request_details", args=[request_obj.pk])).json()
+
+        self.assertContains(page, 'timeZone: "UTC"')
+        self.assertEqual(event["start"], "2026-10-12T09:00:00+00:00")
+        self.assertEqual(event["end"], "2026-10-12T23:59:00+00:00")
+        self.assertEqual(details["start"], "2026-10-12 09:00")
+        self.assertEqual(details["end"], "2026-10-12 23:59")
+
     def test_approved_magic_requests_use_different_event_colors(self):
         self._create_magic_request(status=MagicSecondFloorRequest.APPROVED)
         MagicSecondFloorRequest.objects.create(
